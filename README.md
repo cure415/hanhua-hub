@@ -3,7 +3,7 @@
 > 把散落在 B站、论坛、资讯站与 GitHub 的旧主机游戏中文汉化发布，收进同一张可筛选、可检索、可导出的可视化索引。
 > 纯静态、零后端、零第三方依赖。**只索引发布者的原始页面，不存储或分发 ROM / ISO / 网盘补丁。**
 
-文档对应版本：2026-11-26 数据快照。当前索引 **755 条**（人工整理 137 + 自动抓取 618）、**28 个平台**、**8 个自动数据源**、**11 个 GitHub 监控仓库**、**23 个人工登记来源**。
+文档对应版本：2026-11-26 云端首次运行后的数据快照。当前索引 **756 条**（人工整理 137 + 自动抓取 619）、**28 个平台**、**8 个自动数据源**、**11 个 GitHub 监控仓库**、**23 个人工登记来源**。
 
 ---
 
@@ -73,7 +73,7 @@ npm run update    # 自测 → 抓取 → 打包，一条命令完成本地更�
 ```
 data.js              人工快照 137 条   ─┐
                      （手维护，静态）   │
-auto-data.js         自动快照 618 条   ─┤   app.js normalize()
+auto-data.js         自动快照 619 条   ─┤   app.js normalize()
   ← data/auto.json   （fetch.js 生成）  │        ↓
                                         ├→ items[] → 筛选 → 卡片/时间线/表格 + 图表
 localStorage         本机录入 / 导入    │        ↑
@@ -196,6 +196,15 @@ B站匿名接口有 `-352` 风控：**HTTP 200 但只返回客户端壳页**，�
 有五条路径，按「要不要动手」排序。
 
 ### 方式 A：交给 GitHub Actions（推荐，部署后零操作）
+
+**当前部署状态（2026-11-26 已上线）：**
+
+- 仓库：https://github.com/cure415/hanhua-hub （公开，`main` 分支）
+- 线上站点：https://cure415.github.io/hanhua-hub/ （`index.html` 与 `index-standalone.html` 均返回 200）
+- 本机已通过 Git Credential Manager 完成授权；首次手动运行 `workflow_dispatch` 全绿（run #2：`update` + `deploy` 两个 job 全部 success）
+- 每天北京时间 08:30 / 20:30 自动运行，也可在 Actions 页手动 `Run workflow`
+
+以下是从零复现的步骤（换账号 / 迁移仓库时照做）：
 
 **首次部署一次：**
 
@@ -351,6 +360,8 @@ hanhua-hub/
 | 改了 `data.js` / CSS / app.js，单文件版却没变 | 没跑 `node scripts/build.js`。`index-standalone.html` 是生成物 |
 | `npm test` 失败 | 多半是源站改版导致样本解析结果变化。对照失败断言改 `parsers.js`，必要时更新 `tests/fixtures/` 样本 |
 | Actions 跑了但没新提交 | 本轮与人工快照 / 历史自动条目完全去重后没有新增，工作流会跳过 commit，属正常 |
+| `deploy` 步骤报 "Multiple artifacts named github-pages" | 不要点 **Re-run failed jobs**：它会在同一个 run 里累积 2 个同名产物，部署动作会拒绝。直接重新 **Run workflow** 触发一次全新运行 |
+| `deploy` 步骤报 "No artifacts named github-pages" | 多为 GitHub 产物元数据瞬时故障，重新 Run workflow 一次即可；仍失败再查 githubstatus.com |
 | Pages 打开 404 | 检查 `Settings → Pages → Source` 是否为 **GitHub Actions**，以及工作流 `deploy` job 是否成功 |
 | 时间显示和本地差 8 小时 | `data/auto.json` 的 `generatedAt` 是 UTC（ISO 8601），页面用 `toLocaleString("zh-CN")` 转本地时间显示 |
 | 想要清掉所有自动条目重来 | 删 `data/auto.json`、`auto-data.js`、`data/cache.json`，再跑 `npm run update`（会全量重抓，注意别触发风控） |
@@ -373,6 +384,7 @@ hanhua-hub/
 - `npm test`：50 项解析器自测全部通过，覆盖平台识别、AI 边界、日期、B站 / 资讯站 / 论坛各解析器、合规总检。
 - `npm run check`：6 个 JS 文件语法检查通过；`.github/workflows/update.yml` YAML 解析通过。
 - 真实全量抓取：8 个源全部 `ok`，重建出 619 条自动条目，失败源 0，待审 0，耗时约 18 秒；无网盘 / 镜像链接泄漏，无非法 URL。
-- 手动演练（等价 `workflow_dispatch`）：6 步全绿、8 源全 `ok`。期间发现 Discuz 页脚性能行 `, Processed in 0.09 second(s), 21 queries` 因带 `(s)` 括号骗过了「必须有括号标记」的过滤，被误收为游戏；已在 `BAD_FORUM_LINE` 加过滤并补自测断言（自测升至 50 项），同时清掉历史快照里 1 条同类脏条目。最终自动索引 618 条、页面合计 755 条。
+- 手动演练（等价 `workflow_dispatch`）：6 步全绿、8 源全 `ok`。期间发现 Discuz 页脚性能行 `, Processed in 0.09 second(s), 21 queries` 因带 `(s)` 括号骗过了「必须有括号标记」的过滤，被误收为游戏；已在 `BAD_FORUM_LINE` 加过滤并补自测断言（自测升至 50 项），同时清掉历史快照里 1 条同类脏条目。本地演练结束时自动索引 618 条、页面合计 755 条。
 - 无头浏览器渲染：卡片、KPI、平台筛选、来源面板、自动抓取状态卡、AUTO 徽章全部输出；模拟点击验证「仅自动抓取」筛选、平台筛选、搜索、三视图切换、详情抽屉、表格、主题切换、来源筛选均正常；深浅主题截图对比度无问题。
 - `index-standalone.html` 已重新打包并验证：外部 `<script src>` / `styles.css` 引用数为 0，离线可独立运行。
+- 云端首次真实运行：run #1 的 `deploy` 因 GitHub 产物元数据瞬时故障失败；清理重复产物后重新触发的 **run #2 全绿**（`update` 9 步 + `deploy` 5 步全部 success），自动提交 `70c5dd8` / `15eceda`，Pages 部署成功、线上页面 HTTP 200。云端比本地快照多抓到 1 条合法新增（幻想水浒传3 PS2，围炉Go，置信度 0.92），现为自动 619 条 / 页面合计 756 条；无页脚脏数据、无网盘泄漏。
