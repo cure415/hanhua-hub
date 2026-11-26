@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-26T10:57:33.952Z",
+  "generatedAt": "2026-11-26T11:02:00.041Z",
   "asOf": "2026-11-26",
   "minConfidence": 0.55,
   "note": "由 scripts/fetch.js 自动抓取生成。仅索引发布者原始页面，不含 ROM / ISO / 网盘直链。日期性质：pub=明确发布日，list=汇总/检索日，ver=版本日期码。",
@@ -77,16 +77,16 @@
       "status": "ok",
       "count": 0,
       "message": "发现 3 篇汇总，本次解析 0 篇",
-      "ms": 2036
+      "ms": 1847
     },
     {
       "id": "wlgooo-auto",
       "name": "围炉Go · 新汉化栏目（自动抓取）",
       "kind": "wlgooo",
       "status": "ok",
-      "count": 1,
-      "message": "栏目 8 篇，新取正文 1 篇",
-      "ms": 1435
+      "count": 0,
+      "message": "栏目 8 篇，新取正文 0 篇",
+      "ms": 1389
     },
     {
       "id": "a9vg-index-auto",
@@ -95,7 +95,7 @@
       "status": "ok",
       "count": 0,
       "message": "版块命中 4 个主题，新解析 0 个",
-      "ms": 1630
+      "ms": 777
     },
     {
       "id": "stage1st-index-auto",
@@ -104,16 +104,16 @@
       "status": "ok",
       "count": 0,
       "message": "版块命中 0 个主题，新解析 0 个",
-      "ms": 1090
+      "ms": 946
     },
     {
       "id": "gmerago-sfc-auto",
       "name": "遊戲年代 GO ·《SFC 新汉化汇总》长帖（增量）",
       "kind": "summaryThread",
-      "status": "error",
+      "status": "ok",
       "count": 0,
-      "message": "fetch failed",
-      "ms": 1995
+      "message": "长帖解析出 35 行候选（去重后才会入库）",
+      "ms": 1493
     },
     {
       "id": "gmerago-ps2-auto",
@@ -122,7 +122,7 @@
       "status": "ok",
       "count": 0,
       "message": "长帖解析出 63 行候选（去重后才会入库）",
-      "ms": 549
+      "ms": 530
     },
     {
       "id": "cheatmaker-auto",
@@ -131,7 +131,7 @@
       "status": "ok",
       "count": 0,
       "message": "长帖解析出 27 行候选（去重后才会入库）",
-      "ms": 1197
+      "ms": 22249
     },
     {
       "id": "quanjizhong-auto",
@@ -140,16 +140,16 @@
       "status": "ok",
       "count": 0,
       "message": "机种日志解析出 573 行候选",
-      "ms": 1487
+      "ms": 2185
     }
   ],
   "stats": {
     "totalAutoItems": 619,
-    "newThisRun": 1,
+    "newThisRun": 0,
     "pendingReview": 0,
-    "sourcesOk": 7,
-    "sourcesError": 1,
-    "elapsedMs": 11419
+    "sourcesOk": 8,
+    "sourcesError": 0,
+    "elapsedMs": 31416
   },
   "items": [
     {
