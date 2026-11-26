@@ -87,6 +87,7 @@ const PLATFORM_TOKENS = [
   ["PSP", "PSP"], ["PS3", "PS3"], ["PSVITA", "PSV"], ["PSV", "PSV"],
   ["SUPER FAMICOM", "SFC"], ["SNES", "SFC"], ["SFC", "SFC"], ["超任", "SFC"],
   ["FAMICOM", "FC"], ["NES", "FC"], ["FC", "FC"], ["红白机", "FC"],
+  ["MD32X", "MD32X"], ["32X", "MD32X"],
   ["MEGA DRIVE", "MD"], ["GENESIS", "MD"], ["世嘉五代", "MD"], ["世嘉MD", "MD"], ["MD", "MD"],
   ["SEGA SATURN", "SS"], ["SATURN", "SS"], ["土星", "SS"], ["世嘉SS", "SS"], ["SS", "SS"],
   ["GAME BOY ADVANCE", "GBA"], ["GBA", "GBA"],

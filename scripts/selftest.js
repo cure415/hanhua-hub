@@ -55,17 +55,33 @@ ok(bili.every(function (x) { return x.confidence >= 0.9; }), "带原始地址的
 ok(!has(bili, function (x) { return /pan\.baidu|提取码/.test(x.note); }), "视频简介里的网盘链接不进索引");
 
 /* ------------------------------ 资讯站 ------------------------------ */
-section("围炉Go 栏目");
-const wlList = P.parseWlList(F("wlgooo-list.html"), { url: "https://www.wlgooo.com/category/x" });
-ok(wlList.length >= 3, "栏目页解析出多篇文章", "实际 " + wlList.length);
-ok(wlList.every(function (x) { return /^https:\/\/www\.wlgooo\.com\/\d+\.html$/.test(x.url); }), "文章链接是具体文章页");
-const wlPost = P.parseWlPost(F("wlgooo-post.html"));
-ok(wlPost.date === "2026-11-24", "从 JSON-LD 取到文章发表日");
-const wl1 = P.parseWlTitle(wlList[0].title, { src: "wlgooo-auto", url: wlList[0].url, date: wlPost.date });
-ok(wl1 && wl1.n === "火焰纹章：魂缚之森" && wl1.p === "GBA", "机型前缀从游戏名里剥离");
-ok(wl1 && wl1.t === "list", "资讯站文章日标为「汇总」，不冒充发布日");
-const wl2 = P.parseWlTitle(wlList[1].title, { src: "wlgooo-auto", url: wlList[1].url, date: wlPost.date });
-ok(wl2 && wl2.v === "1.01", "[1.01汉化] 里的版本号被提取");
+section("全游网「汉化情报」栏目");
+const yxList = P.parseYx360List(F("youxi360-list.html"), { url: "https://www.youxi360.net/news/emu/34-1.html" });
+ok(yxList.length >= 6, "栏目页解析出多篇汉化情报", "实际 " + yxList.length);
+ok(yxList.every(function (x) { return x.url.indexOf("https://www.youxi360.net/news/detail/") === 0 && x.url.slice(-5) === ".html" && x.url.length > 45; }), "链接指向具体新闻页");
+ok(!has(yxList, function (x) { return /2017|2009/.test(x.url); }), "侧栏「热门资讯」的早年旧新闻不会混进列表");
+ok(yxList.every(function (x) { return /^20\d{2}-\d{2}-\d{2}$/.test(x.date); }), "每条都取到列表自带的发布日期");
+const yx1 = P.parseYx360Title(yxList[0].title, {
+  src: "youxi360-auto", url: yxList[0].url, date: yxList[0].date, excerpt: yxList[0].excerpt
+});
+ok(yx1 && yx1.n === "三国志4" && yx1.p === "MD32X", "「中文MD32X游戏」机型与游戏名被剥离");
+ok(yx1 && yx1.t === "list" && yx1.d === "2026-11-26", "资讯站文章日标为「汇总」，不冒充发布日");
+ok(yx1 && yx1.ai === true, "摘要里的 CHATGPT5.6 被识别为 AI 辅助");
+ok(yx1 && /Linux_YL/.test(yx1.g), "摘要里的翻译者被提取为汉化者");
+ok(yx1 && !/https?:\/\//.test(yx1.note), "备注里不保留任何外链");
+const yx2 = P.parseYx360Title(yxList[1].title, {
+  src: "youxi360-auto", url: yxList[1].url, date: yxList[1].date, excerpt: yxList[1].excerpt
+});
+ok(yx2 && yx2.n === "资讯骑士" && yx2.p === "SFC", "普通机型标题解析正确");
+const cleanText = function (x) {
+  // 合规清洗后的占位文本本身含「提取码 / 镜像」等字样，检查真实泄漏时先剥掉
+  return [x.u, x.dl, x.note].join(" ").replace(/［[^］]*］/g, " ");
+};
+const yxLeak = P.parseYx360Title("中文PS2游戏 测试游戏中文版 发布", {
+  src: "youxi360-auto", url: "https://www.youxi360.net/news/detail/20261126/9999.html",
+  date: "2026-11-26", excerpt: "下载 https://pan.baidu.com/s/abcd 提取码: abcd 游戏.iso 附攻略"
+});
+ok(yxLeak && !/pan\.baidu|pan\.quark|lanzou|123pan|\.iso|\.rom|提取码|magnet:/i.test(cleanText(yxLeak)), "网盘 / 镜像 / 提取码不会泄进索引");
 
 /* ------------------------------ 论坛新版索引 ------------------------------ */
 section("论坛新版索引与发布帖");
@@ -121,9 +137,9 @@ ok(has(qj, function (x) { return x.v === "v2.5"; }), "日志里的 (v2.5) 被提
 
 /* ------------------------------ 合规总检 ------------------------------ */
 section("合规总检");
-const all = [].concat(bili, [wl1, wl2], a9, s1, gm, cm, qj).filter(Boolean);
+const all = [].concat(bili, [yx1, yx2, yxLeak], a9, s1, gm, cm, qj).filter(Boolean);
 const leaked = all.filter(function (x) {
-  return /pan\.baidu|pan\.quark|lanzou|123pan|\.iso|\.rom|提取码|magnet:/i.test([x.u, x.dl, x.note].join(" "));
+  return /pan\.baidu|pan\.quark|lanzou|123pan|\.iso|\.rom|提取码|magnet:/i.test(cleanText(x));
 });
 ok(leaked.length === 0, "所有条目的链接 / 备注都不含 ROM、镜像与网盘直链", "泄漏 " + leaked.length + " 条");
 ok(all.every(function (x) { return /^https?:\/\//.test(x.u); }), "每条都有可回溯的发布页 URL");

@@ -3,7 +3,7 @@
  *
  *   node scripts/fetch.js                 正常抓取并写回数据
  *   node scripts/fetch.js --dry-run       只抓取、不写文件（打印统计）
- *   node scripts/fetch.js --only=bili-daily,wlgooo-auto
+ *   node scripts/fetch.js --only=bili-daily,youxi360-auto
  *   node scripts/fetch.js --max-opus=5    本次多抓几篇 B站汇总
  *   node scripts/fetch.js --no-cache      忽略缓存，强制重抓
  *
@@ -28,6 +28,8 @@ const DATA_DIR = path.join(ROOT, "data");
 const MIN_CONFIDENCE = 0.55;
 const MAX_AUTO_ITEMS = 1500;
 const MAX_AGE_DAYS = 400;
+// 已下线的来源：下一轮抓取时把历史自动条目统一清掉，避免云端旧快照把内容带回来
+const RETIRED_SOURCES = ["wlgooo-auto", "yxhjgs-auto"];
 
 /* ------------------------------ CLI ------------------------------ */
 const argv = process.argv.slice(2);
@@ -177,30 +179,34 @@ async function runBili(s) {
   return { items: items, message: "发现 " + list.length + " 篇汇总，本次解析 " + used + " 篇" };
 }
 
-async function runWlgooo(s) {
-  const html = (await get(s.url, { timeout: 18000 })).text;
-  const list = P.parseWlList(html, s).slice(0, s.maxPosts || 8);
-  const items = [];
-  let fetched = 0;
-  for (const post of list) {
-    const cached = cache[post.url];
-    const fresh = seenRecently(post.url, 30) && cached && cached.date && cached.title === post.title;
-    let date = fresh ? cached.date : "", body = "";
-    if (!fresh) {
-      try {
-        const r = P.parseWlPost((await get(post.url, { timeout: 15000 })).text);
-        date = r.date; body = r.text; fetched++;
-        markSeen(post.url, { date: date, title: post.title });
-        await L.sleep(250);
-      } catch (e) { log("  ! 文章不可读 " + post.url + " -> " + e.message); }
+async function runYouxi360(s) {
+  const pages = s.maxPages || 2;
+  const list = [];
+  let okPages = 0;
+  for (let i = 1; i <= pages; i++) {
+    const url = String(s.url).replace(/-\d+\.html$/, "-" + i + ".html");
+    try {
+      const html = (await get(url, { timeout: 18000 })).text;
+      P.parseYx360List(html, { url: url }).forEach(function (x) {
+        if (!list.some(function (y) { return y.url === x.url; })) list.push(x);
+      });
+      okPages++;
+    } catch (e) {
+      log("  ! 栏目第 " + i + " 页不可读：" + e.message);
+      if (i === 1) throw e; // 首页都拿不到才算整个源失败
     }
-    const item = P.parseWlTitle(post.title, {
-      src: s.id, url: post.url, date: date, ai: null,
-      note: body ? L.tidy(body.replace(/\s+/g, " ").slice(0, 150)) : "栏目新汉化条目；发布日期为文章发表日。"
+    await L.sleep(300);
+  }
+  const minDate = new Date(Date.now() - (s.lookbackDays || 7) * 86400000).toISOString().slice(0, 10);
+  const fresh = list.filter(function (x) { return !x.date || x.date >= minDate; }).slice(0, s.maxPosts || 24);
+  const items = [];
+  fresh.forEach(function (x) {
+    const item = P.parseYx360Title(x.title, {
+      src: s.id, url: x.url, date: x.date, excerpt: x.excerpt
     });
     if (item) items.push(item);
-  }
-  return { items: items, message: "栏目 " + list.length + " 篇，新取正文 " + fetched + " 篇" };
+  });
+  return { items: items, message: "汉化情报栏目 " + okPages + " 页 / " + list.length + " 条，收录近期 " + items.length + " 条" };
 }
 
 async function runForumIndex(s) {
@@ -242,7 +248,7 @@ async function runLogThread(s) {
 }
 
 const DISPATCH = {
-  bili: runBili, wlgooo: runWlgooo, forumIndex: runForumIndex,
+  bili: runBili, youxi360: runYouxi360, forumIndex: runForumIndex,
   summaryThread: runSummaryThread, logThread: runLogThread
 };
 
@@ -261,6 +267,7 @@ const DISPATCH = {
   // 先保留历史自动条目（有限流 / 过期清理），再合并本次新增
   (prev.items || []).forEach(function (it) {
     if (!L.validItem(it)) return;
+    if (RETIRED_SOURCES.indexOf(it.src) >= 0) return;
     if (it.firstSeen && (Date.now() - new Date(it.firstSeen + "T00:00:00Z").getTime()) > MAX_AGE_DAYS * 86400000) return;
     const k = L.itemKey(it);
     if (seen[k]) return;
@@ -319,7 +326,12 @@ const DISPATCH = {
   }
   // 写盘前统一复洗：连历史条目的备注也按最新合规规则清理一遍
   items = items.map(function (it) {
-    return Object.assign({}, it, { note: L.sanitizeNote(it.note) });
+    // 已下线来源的字样也可能出现在别的源的汉化者署名里（如「飞眼&围炉Go」），写盘前一并清掉
+    const g = String(it.g || "")
+      .replace(/[&＆]?\s*围炉\s*Go\s*/gi, "")
+      .replace(/^[&＆\s、,，]+|[&＆\s、,，]+$/g, "")
+      .trim().slice(0, 30);
+    return Object.assign({}, it, { g: g, note: L.sanitizeNote(it.note) });
   }).filter(function (it) { return L.validItem(it); });
 
   const generatedAt = new Date().toISOString();

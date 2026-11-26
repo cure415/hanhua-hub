@@ -23,7 +23,6 @@ window.HANHUA = {
 
   sources: [
     { id: "bili1015", name: "B站《2026-10-15 汉化情报汇总｜共 16 款》", type: "社区汇总", url: "https://m.bilibili.com/opus/1259475176467202067", updated: "2026-10-16", desc: "由汉化群消息每日自动生成，逐条给出平台、发布者、发布日期、原始视频地址与视频简介里的补丁/网盘说明。" },
-    { id: "wlgooo", name: "围炉Go · 新汉化栏目", type: "资讯站", url: "https://www.wlgooo.com/category/%e6%96%b0%e6%b1%89%e5%8c%96", updated: "2026-11-24", desc: "按日更新的图文条目，标题含平台与版本，附攻略/金手指。部分早期条目只有栏目列表日期。" },
     { id: "smzdm1026", name: "什么值得买《30年前的游戏，这个月刚刚有了中文》", type: "媒体盘点", url: "https://post.smzdm.com/p/a70pz8xd/", updated: "2026-10-26", desc: "按日罗列 10 月下旬的汉化发布记录，并给出 2026 年 SFC 新汉化约为 2025 年两倍的社区口径统计。" },
     { id: "smzdm0821", name: "什么值得买《等了27年，皇家骑士团64终于有中文》", type: "媒体盘点", url: "https://post.smzdm.com/p/agg40v67", updated: "2026-08-21", desc: "记录 7—8 月N64/WSC/PS2 一批冷门作品的首次中文化。" },
     { id: "smzdm1103", name: "什么值得买《19年后土星格兰蒂亚终有中文》", type: "媒体盘点", url: "https://post.smzdm.com/p/ad7mzkqz", updated: "2026-11-03", desc: "按平台横截面盘点同一波发布与预告，多处点名 GPT-6.1 Sol / Claude 等 AI 工具链。" },
@@ -81,22 +80,6 @@ window.HANHUA = {
     { n: "新超级机器人大战", p: "PS1", d: "2026-10-15", t: "pub", g: "hotcofe--泓水", ai: null, v: "修正0.2", k: "release", src: "bili1015", u: "https://www.bilibili.com/video/BV1vwJ16MEMJ", dl: "", note: "修正版镜像，补丁链接在视频简介。" },
     { n: "勇者30", p: "PSP", d: "2026-10-15", t: "pub", g: "aikika", ai: null, v: "", k: "release", src: "bili1015", u: "https://www.bilibili.com/video/BV1t6J26cETY", dl: "", note: "基于日版，菜单/剧情/带字贴图全汉化，OP 加字幕；PPSSPP 与实机均可。" },
 
-    // ---- 围炉Go「新汉化」栏目（2026-10-28 ~ 11-24） ----
-    { n: "火焰纹章：魂缚之森", p: "GBA", d: "2026-11-24", t: "pub", g: "萤火", ai: null, v: "", k: "release", src: "wlgooo", u: "https://www.wlgooo.com/527762.html", dl: "", note: "附攻略，弓兵主角改版。" },
-    { n: "高达回忆录：战争的记忆", p: "PSP", d: "2026-11-23", t: "pub", g: "", ai: null, v: "1.01", k: "release", src: "wlgooo", u: "https://www.wlgooo.com/526154.html", dl: "", note: "跨界高达 ACT，附金手指。" },
-    { n: "王国之心2 最终混合版", p: "PS2", d: "2026-11-20", t: "pub", g: "鸿辉社", ai: null, v: "", k: "release", src: "wlgooo", u: "https://www.wlgooo.com/412151.html", dl: "", note: "中文攻略 + 金手指；汉化者据 PS2 汇总帖。" },
-    { n: "棋魂2", p: "GBA", d: "2026-11-18", t: "pub", g: "", ai: null, v: "", k: "release", src: "wlgooo", u: "https://www.wlgooo.com/481416.html", dl: "", note: "围棋题材改编。" },
-    { n: "玩具兵大战：地盘争夺", p: "GBA", d: "2026-11-16", t: "pub", g: "", ai: null, v: "", k: "release", src: "wlgooo", u: "https://www.wlgooo.com/501598.html", dl: "", note: "3DO 后期掌机兵人作品。" },
-    { n: "格兰蒂亚3", p: "PS2", d: "2026-11-14", t: "pub", g: "飞云", ai: null, v: "", k: "release", src: "wlgooo", u: "https://www.wlgooo.com/484137.html", dl: "", note: "栏目标题标注 PS2 PC 版，附攻略金手指。" },
-    { n: "三国志 完全汉化V2", p: "GBA", d: "2026-11-13", t: "pub", g: "", ai: null, v: "V2", k: "release", src: "wlgooo", u: "https://www.wlgooo.com/486393.html", dl: "", note: "底子取自《三国志 IV》，43 城 / 6 剧本 / 450 武将。" },
-    { n: "王国之心1 最终混合版", p: "PS2", d: "2026-11-10", t: "pub", g: "鸿辉社", ai: null, v: "V2", k: "release", src: "wlgooo", u: "https://www.wlgooo.com/474518.html", dl: "", note: "图文攻略 + 金手指。" },
-    { n: "魔法封神", p: "GBA", d: "2026-11-09", t: "pub", g: "", ai: null, v: "1.1", k: "release", src: "wlgooo", u: "https://www.wlgooo.com/402240.html", dl: "", note: "基于藤崎龙《封神演义》的日厂仙侠小品 RPG。" },
-    { n: "恶魔城X 月下夜想曲（SS版）", p: "SS", d: "2026-11-06", t: "pub", g: "", ai: null, v: "1.02", k: "release", src: "wlgooo", u: "https://www.wlgooo.com/457471.html", dl: "", note: "土星版汉化，图文攻略 + 金手指。" },
-    { n: "英雄战记：烈焰之剑", p: "NDS", d: "2026-11-03", t: "pub", g: "", ai: null, v: "V4", k: "release", src: "wlgooo", u: "https://www.wlgooo.com/category/%e6%96%b0%e6%b1%89%e5%8c%96", dl: "", note: "栏目列表日期，具体文章链接未收录。" },
-    { n: "奥特曼格斗进化2", p: "PS2", d: "2026-11-01", t: "pub", g: "", ai: null, v: "", k: "release", src: "wlgooo", u: "https://www.wlgooo.com/category/%e6%96%b0%e6%b1%89%e5%8c%96", dl: "", note: "附出招表；栏目列表日期。" },
-    { n: "火焰纹章：无名英雄", p: "GBA", d: "2026-10-31", t: "pub", g: "萤火", ai: null, v: "", k: "release", src: "wlgooo", u: "https://www.wlgooo.com/category/%e6%96%b0%e6%b1%89%e5%8c%96", dl: "", note: "嵌入《封印之剑》世界观的前传改版。" },
-    { n: "贤者世界", p: "NDS", d: "2026-10-30", t: "pub", g: "", ai: null, v: "", k: "release", src: "wlgooo", u: "https://www.wlgooo.com/category/%e6%96%b0%e6%b1%89%e5%8c%96", dl: "", note: "Lancarse 开发的迷宫探索 JRPG。" },
-    { n: "无限航路", p: "NDS", d: "2026-10-28", t: "pub", g: "", ai: null, v: "X2", k: "release", src: "wlgooo", u: "https://www.wlgooo.com/category/%e6%96%b0%e6%b1%89%e5%8c%96", dl: "", note: "白金工作室太空歌剧，栏目标注汉化 X2（双版本）。" },
 
     // ---- 10 月下旬密集发布（媒体逐日盘点） ----
     { n: "游戏王 卡片力量6 全剧情AI汉化", p: "PSP", d: "2026-10-22", t: "pub", g: "", ai: true, v: "", k: "release", src: "smzdm1026", u: "https://post.smzdm.com/p/a70pz8xd/", dl: "", note: "全剧情 AI 汉化发布，社区互动 95 赞 / 79 评。" },

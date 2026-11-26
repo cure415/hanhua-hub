@@ -146,58 +146,89 @@ function parseBiliArticles(json) {
   return out.filter(function (x) { if (seen[x.id]) return false; seen[x.id] = 1; return true; });
 }
 
-/* ------------------------------ 资讯站：围炉Go ------------------------------ */
-function parseWlList(html, meta) {
+/* ------------------------------ 资讯站：全游网「汉化情报」 ------------------------------ */
+/**
+ * 栏目页 /news/emu/34-N.html 主列表：每条是一个 <div class="content-item clearfix">，
+ * 内含分类标签「汉化情报」、文章标题链接、精确到秒的发布时间和一段摘要。
+ * 侧栏「热门资讯」是 2009—2019 年的旧新闻，按主列表块解析即可天然避开。
+ */
+function parseYx360List(html, meta) {
   meta = meta || {};
-  const blocks = String(html || "").match(/<article[\s\S]*?<\/article>/g) || [];
+  const s = String(html || "");
+  const blocks = s.split(/(?=<div\s+class="content-item clearfix">)/i)
+    .filter(function (b) { return /^<div\s+class="content-item clearfix">/i.test(b); });
   const out = [];
+  const minYear = new Date().getUTCFullYear() - 1;
   blocks.forEach(function (b) {
-    const hm = b.match(/<h[1-4][^>]*>([\s\S]*?)<\/h[1-4]>/);
-    const title = tidy(textOf(hm ? hm[1] : ""));
-    if (!title || !/汉化/.test(title)) return;
-    let url = "";
-    const links = Array.from(b.matchAll(/<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g));
-    for (const l of links) {
-      const abs = absoluteUrl(l[1], meta.url);
-      if (/\/\d+\.html$/.test(abs)) { url = abs; break; }
-    }
-    if (url && !out.some(function (x) { return x.url === url; })) out.push({ title: title, url: url });
+    const cat = (b.match(/<div\s+class="detail-title"[^>]*>[\s\S]{0,200}?<span[^>]*>([^<]{1,12})<\/span>/i) || [])[1];
+    if (!cat || !/汉化情报/.test(cat)) return;
+    const hm = b.match(/href="([^"]*\/news\/detail\/(20\d{6})\/\d+\.html)"/i);
+    if (!hm) return;
+    const title = tidy(textOf((b.match(/<a[^>]*title="([^"]*)"/i) || [])[1] || ""));
+    const tm = (b.match(/class="list-time"[^>]*>[\s\S]{0,160}?(20\d{2}-\d{2}-\d{2})/i) || [])[1];
+    const date = toISODate(tm || hm[2] || "");
+    // 栏目改版或误抓到早年存档时，直接丢掉过期条目
+    if (!date || Number(date.slice(0, 4)) < minYear) return;
+    const pm = (b.match(/<p[^>]*>([\s\S]*?)<\/p>/i) || [])[1] || "";
+    const excerpt = tidy(textOf(pm)).slice(0, 400);
+    const url = absoluteUrl(hm[1], meta.url || "https://www.youxi360.net/");
+    if (!title || !url || out.some(function (x) { return x.url === url; })) return;
+    out.push({ title: title, url: url, date: date, excerpt: excerpt });
   });
   return out;
 }
-function parseWlPost(html) {
-  const s = String(html || "");
-  const dm = s.match(/"datePublished"\s*:\s*"(20\d{2}-\d{2}-\d{2})/);
-  let body = s;
-  const a = s.indexOf("<article");
-  if (a > 0) {
-    const b = s.indexOf("</article>", a);
-    body = b > a ? s.slice(a, b) : s.slice(a, a + 40000);
-  }
-  const text = linesOf(body).filter(function (x) {
-    return x.length > 14 && !/^(?:og:|https?:|<|文章导航|上一篇|下一篇)/.test(x);
-  }).slice(0, 12).join(" ").slice(0, 500);
-  return { date: dm ? toISODate(dm[1]) : "", text: text };
+
+/** 标题形如「中文MD32X游戏 三国志4中文版 发布」；32X 单独成一类机型 */
+const YX360_PLATFORM = {
+  MD32X: "MD32X", "32X": "MD32X", PS2: "PS2", PS1: "PS1", PS: "PS1", PSP: "PSP",
+  PS3: "PS3", PSV: "PSV", SFC: "SFC", SNES: "SFC", FC: "FC", NES: "FC",
+  MD: "MD", GENESIS: "MD", SS: "SS", GBA: "GBA", GBC: "GBC", GB: "GB",
+  NDS: "NDS", "3DS": "3DS", N64: "N64", NGC: "NGC", DC: "DC", PCE: "PCE",
+  WSC: "WSC", WS: "WS", NEOGEO: "NGCD", WIIU: "WiiU", WII: "Wii", PC: "PC"
+};
+function yx360Platform(tok) {
+  const t = String(tok || "").toUpperCase();
+  return YX360_PLATFORM[t] || L.normalizePlatform(t) || detectPlatform(t, "其他");
 }
-/** 标题形如「GBA火焰纹章：魂缚之森[汉化] - 附攻略，…」 */
-function parseWlTitle(title, meta) {
+function parseYx360Title(title, meta) {
   meta = meta || {};
-  let t = tidy(title).replace(/\s*-\s*[^-]{0,40}(?:围炉Go|游戏年代).*$/i, "");
-  const explicit = /[【\[][^】\]]{1,14}[】\]]|^(?:PS2|PS1|PSP|PS3|PSV|SFC|FC|MD|SS|GBA|GBC|GB|NDS|3DS|N64|NGC|DC|PCE|WSC|WS|NS|Switch|PS)/i.test(t);
-  const p = detectPlatform(t, "其他");
-  const vm = t.match(/\[(\d+(?:\.\d+)+)汉化\]/i);
-  const version = vm ? vm[1] : detectVersion(t);
-  // 去掉首个 " - " 之后的副标题、去掉 [汉化]/[1.01汉化] 标记
-  let n = t.split(/\s+-\s+/)[0].replace(/\[[^\]]{0,20}(?:汉化|中文)[^\]]{0,20}\]/gi, " ").replace(/[【\[][^】\]]{1,14}[】\]]/g, " ");
-  n = cleanName(n);
-  const headTok = (n.match(/^([A-Za-z0-9]{2,8})/) || [])[1];
-  if (headTok && L.normalizePlatform(headTok) === p) n = cleanName(n.slice(headTok.length));
+  const t = tidy(title);
+  const hm = t.match(/^中文\s*([A-Za-z0-9+]{2,10})\s*游戏\s+(.+)$/i);
+  const p = hm ? yx360Platform(hm[1]) : detectPlatform(t, "其他");
+  let raw = hm ? hm[2] : t;
+  raw = raw
+    .replace(/\s*(?:正式)?(?:发布|放出|上线|更新)\s*$/i, " ")
+    .replace(/(?:简体中文版|繁体中文版|完整汉化版|简繁中文版|中文版|汉化版|简体中文|繁体中文|中文|汉化)\s*$/i, " ")
+    .replace(/\s*[（(【\[][^）)】\]]{0,20}[）)】\]]\s*$/g, " ")
+    .replace(/\s+(?:V|v)?\d+(?:\.\d+){1,3}\s*$/i, " ");
+  const n = cleanName(raw);
   if (!n || n.length < 2) return null;
+
+  const excerpt = String(meta.excerpt || "");
+  const am = excerpt.match(/(?:汉化作者|汉化发布者|汉化组|汉化者|翻译|润色)\s*[：:]\s*([^，,；;。\s（(]{2,30})/);
+  let g = "";
+  if (am) {
+    // 摘要常把署名和后文连写（如 "SamwiseTheBrave1992年…"），只取署名本身
+    const head = am[1].match(/^[A-Za-z0-9_.\-]+/) || am[1].match(/^[\u3400-\u9fff]{2,8}/);
+    g = tidy(head ? head[0] : am[1])
+      .replace(/(?:又是|又一组|第一个|的作品|等作品|作品|经典|发布|提供|制作).*$/, "")
+      .replace(/(?:19|20)\d{2}$/, "")
+      .slice(0, 24);
+    if (/^(?:编号|作者|未知|暂无|汉化组|翻译|破解|测试|来源|发布|整理|备注|说明)$/.test(g)) g = "";
+  }
+  // 该栏目大量出现「破解: CHATGPT5.6」这类写法，通用正则的 \bGPT 不会命中
+  const ai = detectAI(excerpt) || (/CHAT\s?GPT|GPT-?\d|AI工具|大模型/i.test(excerpt) ? true : null);
+  const plain = tidy(excerpt
+    .replace(/https?:\/\/\S+/g, " ")
+    .replace(/发布来源\s*[：:]/g, " ")
+    .replace(/[（(][^）)]*$/, " ")
+  ).slice(0, 150);
+  const note = "全游网汉化情报" + (meta.date ? "（资讯发布日 " + meta.date + "）" : "") + "：" + plain;
   return baseItem({
     n: n, p: p, d: meta.date || "", t: meta.date ? "list" : "",
-    g: "", ai: meta.ai || null, v: version, k: "release", src: meta.src,
-    u: meta.url, note: meta.note || ("栏目条目：" + tidy(title).slice(0, 120))
-  }, { permalink: true, explicitPlatform: explicit });
+    g: g, ai: ai, v: detectVersion(t + " " + excerpt.slice(0, 300)),
+    k: "release", src: meta.src, u: meta.url, note: note
+  }, { permalink: true, explicitPlatform: !!p && p !== "其他" });
 }
 
 /* ------------------------------ 论坛：新版列表 ------------------------------ */
@@ -343,28 +374,8 @@ function parseLogThread(html, cfg) {
   return out;
 }
 
-/* ------------------------------ 通用 RSS（备选源） ------------------------------ */
-function parseRss(xml, cfg) {
-  cfg = cfg || {};
-  const items = Array.from(String(xml || "").matchAll(/<item[\s\S]*?<\/item>/gi));
-  const out = [];
-  items.forEach(function (m) {
-    const block = m[0].replace(/<!\[CDATA\[|\]\]>/g, "");
-    const title = tidy(textOf((block.match(/<title>([\s\S]*?)<\/title>/i) || [])[1] || ""));
-    const url = tidy((block.match(/<link>([\s\S]*?)<\/link>/i) || [])[1] || "");
-    const date = toISODate((block.match(/<pubDate>([\s\S]*?)<\/pubDate>/i) || [])[1] || "");
-    if (!title || !url || !/汉化|中文化|补丁/.test(title)) return;
-    const item = parseWlTitle(title, {
-      src: cfg.id, url: safeIndexUrl(url), date: date, ai: null,
-      note: "RSS 条目（" + tidy(title).slice(0, 100) + "）"
-    });
-    if (item) out.push(item);
-  });
-  return out;
-}
-
 module.exports = {
-  parseBiliFeed, parseBiliArticles, parseBiliOpus, parseWlList, parseWlPost, parseWlTitle,
-  parseForumIndex, parseReleaseThread, parseSummaryThread, parseLogThread, parseRss,
+  parseBiliFeed, parseBiliArticles, parseBiliOpus, parseYx360List, parseYx360Title,
+  parseForumIndex, parseReleaseThread, parseSummaryThread, parseLogThread,
   tsToDate, baseItem
 };

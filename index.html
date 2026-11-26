@@ -120,7 +120,7 @@
     </div>
     <div class="auto-help" id="auto-help">
       <b>它怎么跑起来的</b>
-      <p>GitHub Actions 每天两次（北京时间 08:30 / 20:30）执行 <code>node scripts/fetch.js</code>：先读 B站作者的「专栏列表」发现最新「汉化情报汇总」（动态流被 -352 风控时自动降级，正文还有 <code>read/mobile</code> 与 <code>opus</code> 两级兜底），再逐条解析【平台】/ 游戏名 / 汉化发布者 / 发布日期 / 原始视频地址；同时扫 A9VG、Stage1st 新版主题、围炉Go 新汉化栏目，以及 gmerago / CheatMaker / 全机种社区的长帖新增行。结果写回 <code>auto-data.js</code> 与 <code>data/auto.json</code>，重新打包单文件版并提交，Pages 自动部署。</p>
+      <p>GitHub Actions 每天两次（北京时间 08:30 / 20:30）执行 <code>node scripts/fetch.js</code>：先读 B站作者的「专栏列表」发现最新「汉化情报汇总」（动态流被 -352 风控时自动降级，正文还有 <code>read/mobile</code> 与 <code>opus</code> 两级兜底），再逐条解析【平台】/ 游戏名 / 汉化发布者 / 发布日期 / 原始视频地址；同时扫 A9VG、Stage1st 新版主题、全游网「汉化情报」栏目，以及 gmerago / CheatMaker / 全机种社区的长帖新增行。结果写回 <code>auto-data.js</code> 与 <code>data/auto.json</code>，重新打包单文件版并提交，Pages 自动部署。</p>
       <p>解析出的条目带置信度，低于阈值的只进 <code>data/pending.json</code> 待人工复核，不会直接进公开索引；同名同平台条目会与人工快照去重。抓取只保留发布者原始页面，不采集 ROM / ISO / 网盘直链。本地手动运行：<code>node scripts/fetch.js &amp;&amp; node scripts/build.js</code>。</p>
     </div>
   </section>

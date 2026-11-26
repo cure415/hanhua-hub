@@ -14,18 +14,11 @@ const SOURCES = [
     mid: 419762769, maxOpus: 3, lookbackDays: 12
   },
   {
-    id: "wlgooo-auto", kind: "wlgooo", enabled: true,
-    name: "围炉Go · 新汉化栏目（自动抓取）", type: "资讯站 · 自动",
-    url: "https://www.wlgooo.com/category/%e6%96%b0%e6%b1%89%e5%8c%96",
-    desc: "栏目页按篇列出新汉化图文；逐篇读取 JSON-LD 的 datePublished 取发布日期。标记为「汇总日」，不冒充游戏确切发布日。",
-    maxPosts: 8
-  },
-  {
-    id: "yxhjgs-auto", kind: "wlgooo", enabled: false,
-    name: "游戏年代 GO · 新汉化（镜像域名）", type: "资讯站 · 自动",
-    url: "https://www.yxhjgs.com/category/%e6%96%b0%e6%b1%89%e5%8c%96",
-    desc: "yxhjgs.com 与围炉Go为同一站点，默认关闭以免重复收录；需要时把 enabled 改为 true。",
-    maxPosts: 8
+    id: "youxi360-auto", kind: "youxi360", enabled: true,
+    name: "全游网 · 模拟资讯「汉化情报」栏目（自动抓取）", type: "资讯站 · 自动",
+    url: "https://www.youxi360.net/news/emu/34-1.html",
+    desc: "按日更新的「汉化情报」新闻栏目，标题格式稳定为「中文{机型}游戏 {游戏名}中文版 发布」。抓分类页前两页，取列表自带的发布时间与摘要，逐条剥出机型、游戏名、汉化者与 AI 线索。只索引新闻页，不采集站内 ROM / 下载资源。",
+    maxPages: 2, maxPosts: 24, lookbackDays: 7
   },
   {
     id: "a9vg-index-auto", kind: "forumIndex", enabled: true,
