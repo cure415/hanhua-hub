@@ -1,0 +1,20 @@
+# 本地无头浏览器验证 / 截图临时产物
+.chrome*/
+.dom*.html
+.preview*.png
+.run-summary.md
+_verify.html
+_shot*.html
+.tmp-*.html
+.before.sha
+.after.sha
+*.log
+
+# 页面「导出 JSON」产生的本机文件（可能含个人录入，不入库）
+hanhua-export*.json
+custom-export*.json
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+node_modules/

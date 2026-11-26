@@ -1,0 +1,74 @@
+[
+  {
+    "id": "bili-daily",
+    "name": "B站《汉化情报汇总》每日专栏（自动抓取）",
+    "kind": "bili",
+    "status": "ok",
+    "count": 0,
+    "message": "发现 3 篇汇总，本次解析 0 篇",
+    "ms": 274
+  },
+  {
+    "id": "wlgooo-auto",
+    "name": "围炉Go · 新汉化栏目（自动抓取）",
+    "kind": "wlgooo",
+    "status": "ok",
+    "count": 0,
+    "message": "栏目 8 篇，新取正文 0 篇",
+    "ms": 146
+  },
+  {
+    "id": "a9vg-index-auto",
+    "name": "A9VG · PS2综合讨论区汉化发布帖（自动发现）",
+    "kind": "forumIndex",
+    "status": "ok",
+    "count": 0,
+    "message": "版块命中 4 个主题，新解析 0 个",
+    "ms": 566
+  },
+  {
+    "id": "stage1st-index-auto",
+    "name": "Stage1st · 游戏论坛汉化补丁帖（自动发现）",
+    "kind": "forumIndex",
+    "status": "ok",
+    "count": 0,
+    "message": "版块命中 0 个主题，新解析 0 个",
+    "ms": 221
+  },
+  {
+    "id": "gmerago-sfc-auto",
+    "name": "遊戲年代 GO ·《SFC 新汉化汇总》长帖（增量）",
+    "kind": "summaryThread",
+    "status": "ok",
+    "count": 0,
+    "message": "长帖解析出 35 行候选（去重后才会入库）",
+    "ms": 2694
+  },
+  {
+    "id": "gmerago-ps2-auto",
+    "name": "遊戲年代 GO ·《PS2 汉化游戏汇总》长帖（增量）",
+    "kind": "summaryThread",
+    "status": "ok",
+    "count": 0,
+    "message": "长帖解析出 63 行候选（去重后才会入库）",
+    "ms": 1042
+  },
+  {
+    "id": "cheatmaker-auto",
+    "name": "CheatMaker ·《MD / SS 汉化游戏汇总》长帖（增量）",
+    "kind": "summaryThread",
+    "status": "ok",
+    "count": 0,
+    "message": "长帖解析出 27 行候选（去重后才会入库）",
+    "ms": 15646
+  },
+  {
+    "id": "quanjizhong-auto",
+    "name": "全机种社区 ·《汉化游戏更新日志》长帖（增量）",
+    "kind": "logThread",
+    "status": "ok",
+    "count": 0,
+    "message": "机种日志解析出 573 行候选",
+    "ms": 596
+  }
+]

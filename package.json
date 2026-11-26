@@ -1,0 +1,15 @@
+{
+  "name": "retro-hanhua-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "旧主机游戏中文汉化发布的可视化索引，含 B站 / 论坛 / 资讯站定时抓取管线",
+  "scripts": {
+    "fetch": "node scripts/fetch.js",
+    "build": "node scripts/build.js",
+    "update": "node scripts/selftest.js && node scripts/fetch.js && node scripts/build.js",
+    "test": "node scripts/selftest.js",
+    "check": "node --check data.js && node --check app.js && node --check auto-data.js && node --check scripts/fetch.js && node --check scripts/selftest.js && node --check scripts/build.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {}
+}
