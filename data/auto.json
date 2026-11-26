@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-26T12:41:09.334Z",
+  "generatedAt": "2026-11-26T12:44:40.840Z",
   "asOf": "2026-11-26",
   "minConfidence": 0.55,
   "note": "由 scripts/fetch.js 自动抓取生成。仅索引发布者原始页面，不含 ROM / ISO / 网盘直链。日期性质：pub=明确发布日，list=汇总/检索日，ver=版本日期码。",
@@ -77,16 +77,16 @@
       "status": "ok",
       "count": 0,
       "message": "发现 3 篇汇总，本次解析 0 篇",
-      "ms": 272
+      "ms": 1911
     },
     {
       "id": "youxi360-auto",
       "name": "全游网 · 模拟资讯「汉化情报」栏目（自动抓取）",
       "kind": "youxi360",
-      "status": "ok",
-      "count": 19,
-      "message": "汉化情报栏目 2 页 / 20 条，收录近期 20 条",
-      "ms": 1266
+      "status": "error",
+      "count": 0,
+      "message": "HTTP 418",
+      "ms": 2464
     },
     {
       "id": "a9vg-index-auto",
@@ -95,7 +95,7 @@
       "status": "ok",
       "count": 0,
       "message": "版块命中 4 个主题，新解析 0 个",
-      "ms": 647
+      "ms": 1573
     },
     {
       "id": "stage1st-index-auto",
@@ -104,7 +104,7 @@
       "status": "ok",
       "count": 0,
       "message": "版块命中 0 个主题，新解析 0 个",
-      "ms": 205
+      "ms": 1227
     },
     {
       "id": "gmerago-sfc-auto",
@@ -113,7 +113,7 @@
       "status": "ok",
       "count": 0,
       "message": "长帖解析出 35 行候选（去重后才会入库）",
-      "ms": 2643
+      "ms": 1549
     },
     {
       "id": "gmerago-ps2-auto",
@@ -122,7 +122,7 @@
       "status": "ok",
       "count": 0,
       "message": "长帖解析出 63 行候选（去重后才会入库）",
-      "ms": 1411
+      "ms": 581
     },
     {
       "id": "cheatmaker-auto",
@@ -131,7 +131,7 @@
       "status": "ok",
       "count": 0,
       "message": "长帖解析出 27 行候选（去重后才会入库）",
-      "ms": 1794
+      "ms": 1979
     },
     {
       "id": "quanjizhong-auto",
@@ -140,16 +140,16 @@
       "status": "ok",
       "count": 0,
       "message": "机种日志解析出 573 行候选",
-      "ms": 408
+      "ms": 1958
     }
   ],
   "stats": {
     "totalAutoItems": 637,
-    "newThisRun": 19,
+    "newThisRun": 0,
     "pendingReview": 0,
-    "sourcesOk": 8,
-    "sourcesError": 0,
-    "elapsedMs": 8646
+    "sourcesOk": 7,
+    "sourcesError": 1,
+    "elapsedMs": 13242
   },
   "items": [
     {
