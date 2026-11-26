@@ -199,10 +199,26 @@ B站匿名接口有 `-352` 风控：**HTTP 200 但只返回客户端壳页**，�
 
 **首次部署一次：**
 
-1. 把 `hanhua-hub/` **整个目录作为仓库根目录**推送到 GitHub（`.github/workflows/update.yml` 要在仓库根下）。
-2. `Settings → Actions → General → Workflow permissions` 选 **Read and write permissions**（工作流要 `git push`）。
-3. `Settings → Pages → Build and deployment → Source` 选 **GitHub Actions**。
-4. 推送后，`.github/workflows/update.yml` 生效；也可在 Actions 页手动 `Run workflow`。
+本地仓库已初始化完成：`main` 分支、首个提交包含全部 31 个文件、工作区干净，`hanhua-hub/` 本身就是仓库根目录（`.github/workflows/update.yml` 已在正确位置）。剩下只需关联远端并推送。
+
+1. 在 GitHub 网页新建一个**空仓库**（不要勾选 README / .gitignore / License，否则首次 push 会冲突），拿到 `https://github.com/<用户名>/<仓库名>.git`。
+2. 准备认证：**GitHub 账号密码不能用于 Git 推送**（自 2021-08 起已禁用，会报 `Authentication failed`）。二选一：
+   - 推荐 **Git Credential Manager**：本机已安装（v2.9.0）。`git push` 时会弹浏览器让你登录 GitHub 授权，凭据由 Windows 安全存储，不需要创建或粘贴任何令牌。
+   - 或 **Personal Access Token**：`Settings → Developer settings → Personal access tokens → Tokens (classic)`，勾选 `repo` + `workflow`；push 时用户名填 GitHub 用户名、**密码栏粘贴 PAT**（不是账号密码）。用完可随时 revoke。
+3. 关联远端并推送：
+
+   ```bash
+   cd hanhua-hub
+   git config credential.helper manager        # 仅本仓库生效，不影响其他项目
+   git remote add origin https://github.com/<用户名>/<仓库名>.git
+   git push -u origin main
+   ```
+
+4. `Settings → Actions → General → Workflow permissions` 选 **Read and write permissions**（工作流要 `git push`）。
+5. `Settings → Pages → Build and deployment → Source` 选 **GitHub Actions**。
+6. 推送后，`.github/workflows/update.yml` 生效；也可在 Actions 页手动 `Run workflow`。
+
+> 安全提示：不要把账号密码或 PAT 写进命令、URL、脚本或提交内容；`git remote -v` 里若出现 `https://user:token@github.com/...` 说明凭据已明文落地，应立刻 `git remote set-url` 去掉并撤销该令牌。
 
 **日常运行：**
 
