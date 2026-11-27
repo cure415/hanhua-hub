@@ -4,9 +4,9 @@
     "name": "B站《汉化情报汇总》每日专栏（自动抓取）",
     "kind": "bili",
     "status": "ok",
-    "count": 39,
-    "message": "发现 3 篇汇总，本次解析 1 篇",
-    "ms": 7199
+    "count": 0,
+    "message": "发现 3 篇汇总，本次解析 0 篇",
+    "ms": 1913
   },
   {
     "id": "youxi360-auto",
@@ -15,7 +15,7 @@
     "status": "error",
     "count": 0,
     "message": "HTTP 418",
-    "ms": 2258
+    "ms": 1919
   },
   {
     "id": "a9vg-index-auto",
@@ -24,16 +24,16 @@
     "status": "ok",
     "count": 0,
     "message": "版块命中 4 个主题，新解析 0 个",
-    "ms": 790
+    "ms": 1123
   },
   {
     "id": "stage1st-index-auto",
     "name": "Stage1st · 游戏论坛汉化补丁帖（自动发现）",
     "kind": "forumIndex",
     "status": "ok",
-    "count": 0,
-    "message": "版块命中 0 个主题，新解析 0 个",
-    "ms": 880
+    "count": 1,
+    "message": "版块命中 1 个主题，新解析 1 个",
+    "ms": 1508
   },
   {
     "id": "gmerago-sfc-auto",
@@ -42,7 +42,7 @@
     "status": "ok",
     "count": 0,
     "message": "长帖解析出 35 行候选（去重后才会入库）",
-    "ms": 1176
+    "ms": 1542
   },
   {
     "id": "gmerago-ps2-auto",
@@ -51,7 +51,7 @@
     "status": "ok",
     "count": 0,
     "message": "长帖解析出 63 行候选（去重后才会入库）",
-    "ms": 435
+    "ms": 568
   },
   {
     "id": "cheatmaker-auto",
@@ -60,7 +60,7 @@
     "status": "ok",
     "count": 0,
     "message": "长帖解析出 27 行候选（去重后才会入库）",
-    "ms": 310
+    "ms": 951
   },
   {
     "id": "quanjizhong-auto",
@@ -69,6 +69,6 @@
     "status": "ok",
     "count": 0,
     "message": "机种日志解析出 573 行候选",
-    "ms": 1163
+    "ms": 1521
   }
 ]
