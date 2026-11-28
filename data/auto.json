@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-27T21:31:55.130Z",
-  "asOf": "2026-11-27",
+  "generatedAt": "2026-11-28T08:18:43.395Z",
+  "asOf": "2026-11-28",
   "minConfidence": 0.55,
   "note": "由 scripts/fetch.js 自动抓取生成。仅索引发布者原始页面，不含 ROM / ISO / 网盘直链。日期性质：pub=明确发布日，list=汇总/检索日，ver=版本日期码。",
   "sources": [
@@ -9,7 +9,7 @@
       "name": "B站《汉化情报汇总》每日专栏（自动抓取）",
       "type": "社区汇总 · 自动",
       "url": "https://space.bilibili.com/419762769/dynamic",
-      "updated": "2026-11-27 自动",
+      "updated": "2026-11-28 自动",
       "desc": "作者「紫琥珀姐姐」每天发布一篇按平台逐条列出的汉化情报汇总。通过作者动态流发现最新专栏，再解析正文里的【平台】游戏名、汉化发布者、发布日期与原始视频地址。"
     },
     {
@@ -17,7 +17,7 @@
       "name": "全游网 · 模拟资讯「汉化情报」栏目（自动抓取）",
       "type": "资讯站 · 自动",
       "url": "https://www.youxi360.net/news/emu/34-1.html",
-      "updated": "2026-11-27 自动",
+      "updated": "2026-11-28 自动",
       "desc": "按日更新的「汉化情报」新闻栏目，标题格式稳定为「中文{机型}游戏 {游戏名}中文版 发布」。抓分类页前两页，取列表自带的发布时间与摘要，逐条剥出机型、游戏名、汉化者与 AI 线索。只索引新闻页，不采集站内 ROM / 下载资源。"
     },
     {
@@ -25,7 +25,7 @@
       "name": "A9VG · PS2综合讨论区汉化发布帖（自动发现）",
       "type": "论坛 · 自动",
       "url": "https://bbs.a9vg.com/archiver/?fid-19.html",
-      "updated": "2026-11-27 自动",
+      "updated": "2026-11-28 自动",
       "desc": "从 PS2 综合讨论区的 Archiver 版块索引里筛出新的「汉化发布 / 中文补丁」主题帖，逐帖解析标题中的机型与游戏名、发帖日期和 AI 说明。"
     },
     {
@@ -33,7 +33,7 @@
       "name": "Stage1st · 游戏论坛汉化补丁帖（自动发现）",
       "type": "论坛 · 自动",
       "url": "https://stage1st.com/2b/forum-4-1.html",
-      "updated": "2026-11-27 自动",
+      "updated": "2026-11-28 自动",
       "desc": "抓取游戏论坛版块索引里含「汉化 / 简体中文补丁」的新主题，逐帖解析。该版发布频率较低，抓不到新帖属正常。"
     },
     {
@@ -41,7 +41,7 @@
       "name": "遊戲年代 GO ·《SFC 新汉化汇总》长帖（增量）",
       "type": "论坛清单 · 自动",
       "url": "https://www.gmerago.com/archiver?tid-10404.html",
-      "updated": "2026-11-27 自动",
+      "updated": "2026-11-28 自动",
       "desc": "按「《游戏名》（汉化组：X）——说明」逐行解析的长帖；每次运行只把新增行（与已有索引去重后）写进结果。"
     },
     {
@@ -49,7 +49,7 @@
       "name": "遊戲年代 GO ·《PS2 汉化游戏汇总》长帖（增量）",
       "type": "论坛清单 · 自动",
       "url": "https://www.gmerago.com/forum.php?mod=viewthread&tid=10458",
-      "updated": "2026-11-27 自动",
+      "updated": "2026-11-28 自动",
       "desc": "PS2 汉化汇总长帖，按行解析新增条目；Archiver 版可读性更好时会自动回退。"
     },
     {
@@ -57,7 +57,7 @@
       "name": "CheatMaker ·《MD / SS 汉化游戏汇总》长帖（增量）",
       "type": "论坛清单 · 自动",
       "url": "https://www.cheatmaker.org/archiver/showtopic-32981.aspx",
-      "updated": "2026-11-27 自动",
+      "updated": "2026-11-28 自动",
       "desc": "按「游戏名 —— 汉化者 —— 说明」逐行解析，并依据帖内「MD / Master System / 土星 SS」小标题自动切换机型。"
     },
     {
@@ -65,7 +65,7 @@
       "name": "全机种社区 ·《汉化游戏更新日志》长帖（增量）",
       "type": "论坛清单 · 自动",
       "url": "https://www.quanjizhong.top/thread-675-1-1.html",
-      "updated": "2026-11-27 自动",
+      "updated": "2026-11-28 自动",
       "desc": "按「机种N：平台（增加X款）」分段、逐行解析带版本 / 语言 / 汉化者标记的条目，每月更新一次的长帖。"
     }
   ],
@@ -75,9 +75,9 @@
       "name": "B站《汉化情报汇总》每日专栏（自动抓取）",
       "kind": "bili",
       "status": "ok",
-      "count": 48,
-      "message": "发现 3 篇汇总，本次解析 2 篇",
-      "ms": 9304
+      "count": 0,
+      "message": "发现 3 篇汇总，本次解析 0 篇",
+      "ms": 1752
     },
     {
       "id": "youxi360-auto",
@@ -86,7 +86,7 @@
       "status": "error",
       "count": 0,
       "message": "HTTP 418",
-      "ms": 2146
+      "ms": 2067
     },
     {
       "id": "a9vg-index-auto",
@@ -95,7 +95,7 @@
       "status": "ok",
       "count": 0,
       "message": "版块命中 4 个主题，新解析 0 个",
-      "ms": 530
+      "ms": 837
     },
     {
       "id": "stage1st-index-auto",
@@ -103,8 +103,8 @@
       "kind": "forumIndex",
       "status": "ok",
       "count": 0,
-      "message": "版块命中 1 个主题，新解析 0 个",
-      "ms": 995
+      "message": "版块命中 0 个主题，新解析 0 个",
+      "ms": 5891
     },
     {
       "id": "gmerago-sfc-auto",
@@ -112,8 +112,8 @@
       "kind": "summaryThread",
       "status": "ok",
       "count": 0,
-      "message": "长帖解析出 35 行候选（去重后才会入库）",
-      "ms": 1514
+      "message": "长帖解析出 0 行候选（去重后才会入库）",
+      "ms": 1781
     },
     {
       "id": "gmerago-ps2-auto",
@@ -122,7 +122,7 @@
       "status": "ok",
       "count": 0,
       "message": "长帖解析出 63 行候选（去重后才会入库）",
-      "ms": 545
+      "ms": 425
     },
     {
       "id": "cheatmaker-auto",
@@ -131,7 +131,7 @@
       "status": "ok",
       "count": 0,
       "message": "长帖解析出 27 行候选（去重后才会入库）",
-      "ms": 917
+      "ms": 5293
     },
     {
       "id": "quanjizhong-auto",
@@ -140,16 +140,16 @@
       "status": "ok",
       "count": 0,
       "message": "机种日志解析出 573 行候选",
-      "ms": 2227
+      "ms": 1508
     }
   ],
   "stats": {
     "totalAutoItems": 725,
-    "newThisRun": 48,
+    "newThisRun": 0,
     "pendingReview": 0,
     "sourcesOk": 7,
     "sourcesError": 1,
-    "elapsedMs": 18178
+    "elapsedMs": 19554
   },
   "items": [
     {
