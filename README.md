@@ -3,7 +3,9 @@
 > 把散落在 B站、论坛、资讯站与 GitHub 的旧主机游戏中文汉化发布，收进同一张可筛选、可检索、可导出的可视化索引。
 > 纯静态、零后端、零第三方依赖。**只索引发布者的原始页面，不存储或分发 ROM / ISO / 网盘补丁。**
 
-文档对应版本：2026-11-26 第二版（移除旧资讯站、接入全游网「汉化情报」）。当前索引 **759 条**（人工整理 122 + 自动抓取 637）、**31 个平台**、**8 个自动数据源**、**11 个 GitHub 监控仓库**、**22 个人工登记来源**。
+文档对应版本：2026-11-28 同步版（合并云端 4 次定时抓取，并上线本地两版迭代）。当前索引 **857 条**（人工整理 122 + 自动抓取 735）、**31 个平台**、**8 个自动数据源**、**11 个 GitHub 监控仓库**、**22 个人工登记来源**。
+
+> 本版已同步到 GitHub 并部署 Pages。新增「网盘渠道情报」——从来源页文本里识别百度网盘 / 夸克网盘渠道并支持筛选，只记录渠道名，不采集链接、提取码、文件名或文件列表；以及「数据修正台」——用独立覆盖层做体检、纠错、批量修正与备份回滚，见方式 F。
 
 ---
 
@@ -38,11 +40,16 @@
 ### 命令速查
 
 ```bash
-npm test          # 解析器离线自测（55 项，纯本地样本，无需联网）
-npm run check     # 检查 6 个 JS 文件语法
+npm test          # 离线自测（81 项，纯本地样本，无需联网）
+npm run check     # 检查全部 JS 文件语法
 npm run fetch     # 抓取并写回数据
 npm run build     # 重新打包 index-standalone.html
 npm run update    # 自测 → 抓取 → 打包，一条命令完成本地更新
+
+npm run editor    # 启动数据修正台 → http://127.0.0.1:8787/editor.html
+npm run apply-fixes -- <补丁.json>   # 离线应用修正台导出的补丁
+npm run apply-fixes -- --list        # 列出可回滚备份
+npm run apply-fixes -- --reset       # 清空全部修正，回到原始快照
 ```
 
 ---
@@ -66,17 +73,19 @@ npm run update    # 自测 → 抓取 → 打包，一条命令完成本地更�
 
 ## 四、运作原理
 
-### 4.1 四层数据合成
+### 4.1 数据合成（四层 + 修正覆盖层）
 
 页面本身不含数据库，所有数据在浏览器里合并成一张表：
 
 ```
 data.js              人工快照 122 条   ─┐
                      （手维护，静态）   │
-auto-data.js         自动快照 637 条   ─┤   app.js normalize()
-  ← data/auto.json   （fetch.js 生成）  │        ↓
-                                        ├→ items[] → 筛选 → 卡片/时间线/表格 + 图表
-localStorage         本机录入 / 导入    │        ↑
+auto-data.js         自动快照 735 条   ─┤
+  ← data/auto.json   （fetch.js 生成）  │   app.js normalize()
+                                        │        ↓
+overrides.js         修正覆盖层 ────────┤→ items[] → 筛选 → 卡片/时间线/表格 + 图表
+  ← data/overrides.json                │        ↑
+localStorage         本机录入 / 导入    │        │
   hanhua.custom.v1   （只在本机）      ─┘        │
                                                   │
 GitHub Releases API  运行时实时请求 ────────→ 「GitHub 动态」独立区块
@@ -86,6 +95,7 @@ GitHub Releases API  运行时实时请求 ────────→ 「GitHub
 - `window.HANHUA`（`data.js`）与 `window.HANHUA_AUTO`（`auto-data.js`）都是**普通 `<script>` 挂到 window 的对象**，不是 `fetch()` JSON —— 这样 `file://` 双击打开也不会被 CORS 拦住。
 - `auto-data.js` 与 `data/auto.json` 内容同源，前者给网页用，后者给别的工具消费。
 - `app.js` 用 `normalize()` 把三层条目统一成同一字段结构，再按来源 id 合并来源说明，最后交给 `filtered()` → `render()`。
+- **修正覆盖层**：`overrides.js`（由 `data/overrides.json` 生成）在合并**之前**应用「字段修正 / 删除 / 新增」。它独立于人工与自动快照，所以定时抓取重建 `auto-data.js` 不会冲掉人工修正。详见「方式 F」。
 - 页面上显示的「截至」日期取**自动抓取日与人工快照日中较新的一个**。
 
 ### 4.2 抓取管线（`scripts/fetch.js`）
@@ -167,8 +177,10 @@ B站匿名接口有 `-352` 风控：**HTTP 200 但只返回客户端壳页**，�
 | `u` | **原始发布页**（必填，`http(s)://`，不能是网盘或镜像） |
 | `dl` | 补丁 / Release 页，可空 |
 | `note` | 备注 |
+| `pan` | 网盘渠道名数组，取值仅限 `百度网盘` / `夸克网盘` / `网盘（未注明）`；**不含链接** |
+| `panCode` | 布尔，仅表示发布页是否标注了提取码，不保存取值 |
 
-自动条目额外带 `auto: true`、`confidence`（0–1）、`firstSeen`（首次入库日）。
+自动条目额外带 `auto: true`、`confidence`（0–1）、`firstSeen`（首次入库日）。`pan` / `panCode` 由 `fetch.js` 写盘前统一计算，页面对人工快照与本机录入条目也会从备注现场推断。
 
 最小示例：
 
@@ -300,6 +312,40 @@ node scripts/build.js
 4. 常用阈值在 `scripts/fetch.js` 顶部：`MIN_CONFIDENCE`（0.55）、`MAX_AUTO_ITEMS`（1500）、`MAX_AGE_DAYS`（400）。
 5. 跑 `node scripts/fetch.js --only=<新源id> --verbose` 单源验证，确认无误再 `npm run update`。
 
+### 方式 F：数据修正台（纠错 / 批量修正，推荐）
+
+前面几种方式改的是「原始数据」，而日常更多是修已有条目的错字、平台、日期性质、误收条目。这类修正请用数据修正台，它**不会改动** `data.js` 与 `data/auto.json`：
+
+```bash
+npm run editor
+# 浏览器打开终端给出的地址，默认 http://127.0.0.1:8787/editor.html（端口占用会自动顺延）
+```
+
+**为什么用覆盖层**：修正写进 `data/overrides.json` + `overrides.js`，页面合并时按「层 + 游戏名 + 平台 + 发布页」算出的稳定指纹（`fingerprint.js`）定位条目再应用。自动快照每轮重排也不会错位；抓取管线完全不碰这个文件，所以定时更新不会把人工修正冲掉。
+
+| 能力 | 说明 |
+| --- | --- |
+| 数据体检 | 自动列出名称可疑、日期/性质不匹配、平台可疑、发布页异常、备注含清洗占位、同名同平台重复、低置信度、来源未登记、网盘渠道异常，点问题数直接筛出条目 |
+| 行内编辑 | 点「编辑」打开侧栏改全部字段并显示原值对比；改回原值自动撤销该条修正 |
+| 批量操作 | 多选后统一赋值某字段；正则替换（支持 `/正则/g`）可先预览再应用；批量删除 |
+| 新增 / 删除 | 新增条目进覆盖层；删除只做标记，原始快照不变，随时可回滚 |
+| 撤销 | Ctrl+Z 或「撤销」按钮，保留最近 60 步 |
+| 保存 | 保存前显示完整 diff；服务端校验通过后写覆盖层、自动备份，并重建 `overrides.js` 与单文件版 |
+| 回滚 | 「备份 / 回滚」列出最近 20 份自动备份，一键恢复 |
+
+**离线用法**：直接双击 `editor.html` 也能读数据、体检、编辑（右上角显示「离线 · 仅导出补丁」）。点「导出补丁」得到 `hanhua-fixes-*.json`，再执行：
+
+```bash
+npm run apply-fixes -- hanhua-fixes-2026-11-26.json
+npm run apply-fixes -- --list                  # 看备份
+npm run apply-fixes -- --restore=<备份文件名>  # 回滚
+npm run apply-fixes -- --reset                # 清空全部修正
+```
+
+**写盘护栏**：服务只监听 `127.0.0.1` 且校验 Host；字段白名单、URL 必须可回溯（网盘 / 镜像 / 磁力链一律拒绝）、备注自动走 `sanitizeNote()`、日期与枚举校验、单次删除超过 50 条拦截、定位键必须存在于当前快照。备份在 `data/backups/`（已加入 `.gitignore`）。
+
+> 修正已随本版同步到 GitHub：`overrides.js` 与 `data/overrides.json` 均已提交，工作流 `git add` 也已包含 `overrides.js`，云端重建单文件版会带上修正。以后在本机改了修正层，把这两个文件一起 `git push` 即可。
+
 ### 待审队列怎么用
 
 `data/pending.json` 里是置信度不足的候选，字段含 `confidence` 与 `reason`。它们**只在本次运行生成、不会自动升级进索引**。处理方式：
@@ -330,16 +376,24 @@ hanhua-hub/
 ├─ app.js                     交互层：合并数据、筛选、渲染、导入导出、GitHub 同步
 ├─ data.js                    ★ 人工整理快照（手维护）
 ├─ auto-data.js               ★ 自动抓取产物（fetch.js 生成，勿手改）
+├─ editor.html                ★ 数据修正台页面（也可双击离线使用）
+├─ fingerprint.js             条目稳定指纹（浏览器 / Node 共用）
+├─ overrides.js               修正覆盖层（修正台生成，勿手改）
 ├─ data/
 │  ├─ auto.json               自动条目机器可读版 + stats / report / sources
+│  ├─ overrides.json          ★ 修正覆盖层机器可读版
 │  ├─ report.json             上次各源状态
 │  ├─ pending.json            待人工复核候选
-│  └─ cache.json              已解析页面缓存
+│  ├─ cache.json              已解析页面缓存
+│  └─ backups/                修正自动备份（.gitignore 排除，不入库）
 ├─ scripts/
 │  ├─ lib.js                  请求、文本、平台 / AI / 版本 / 日期、去重、置信度、合规
 │  ├─ parsers.js              各站解析器
 │  ├─ sources.js              ★ 数据源配置（新增源改这里）
 │  ├─ fetch.js                ★ 抓取主流程与 CLI
+│  ├─ apply-edits.js          ★ 修正写盘核心：校验 / 备份 / 重建
+│  ├─ editor-server.js        本地修正台服务（仅监听 127.0.0.1）
+│  ├─ apply-fixes.js          离线补丁应用 CLI
 │  ├─ selftest.js             离线自测
 │  └─ build.js                单文件版打包
 ├─ tests/fixtures/            从真实页面裁下的测试样本
@@ -359,6 +413,9 @@ hanhua-hub/
 | 「同步 Release」显示 403 / 读取失败 | GitHub 匿名 API 限额约 60 次/小时，页面缓存 30 分钟以免反复占用。稍后再试 |
 | 改了 `data.js` / CSS / app.js，单文件版却没变 | 没跑 `node scripts/build.js`。`index-standalone.html` 是生成物 |
 | `npm test` 失败 | 多半是源站改版导致样本解析结果变化。对照失败断言改 `parsers.js`，必要时更新 `tests/fixtures/` 样本 |
+| 修正台显示「离线 · 仅导出补丁」 | 直接双击了 `editor.html`。在线写盘要跑 `npm run editor`，用终端给出的地址打开；或导出补丁后执行 `npm run apply-fixes -- <文件>` |
+| 定时抓取后人工修正消失了 | 正常不会：修正存在独立的 `overrides.json` / `overrides.js`，抓取脚本不碰它。若部署到云端，确认这两个文件已提交，且工作流 `git add` 包含 `overrides.js` |
+| 修正台保存被拒绝 | 弹窗会列出具体原因，常见是发布页填了网盘 / 镜像链接、枚举字段不合法、或定位键因原始快照更新而失效 |
 | Actions 跑了但没新提交 | 本轮与人工快照 / 历史自动条目完全去重后没有新增，工作流会跳过 commit，属正常 |
 | `deploy` 步骤报 "Multiple artifacts named github-pages" | 不要点 **Re-run failed jobs**：它会在同一个 run 里累积 2 个同名产物，部署动作会拒绝。直接重新 **Run workflow** 触发一次全新运行 |
 | `deploy` 步骤报 "No artifacts named github-pages" | 多为 GitHub 产物元数据瞬时故障，重新 Run workflow 一次即可；仍失败再查 githubstatus.com |
@@ -371,6 +428,7 @@ hanhua-hub/
 ## 九、合规边界与已知局限
 
 - **只做索引**：`u` / `dl` 指向发布者原帖、专栏、视频、开源仓库 Release；不托管 ROM、ISO、完整镜像，不直链网盘，备注里的网盘地址与提取码一律清洗。请自行合法持有原版游戏，遵守各汉化作者的使用声明。
+- **网盘只记渠道，不记内容**：百度网盘 / 夸克网盘的分享页需要登录、提取码与 JS 渲染，且强风控，本项目不抓取、不索引、不转发其链接、提取码、文件名或文件列表；只把「发布页标注了哪个渠道」结构化成 `pan` 字段，用于筛选与统计。清洗规则的替换文案会保留渠道名，保证清洗后仍可识别；下载请一律回到原发布页。
 - **快照 ≠ 实时全库**：长帖 / 清单类条目没有逐条发布日期，只能标「未标注」或「汇总日」；趋势图只统计有明确发布日期的记录。
 - **依赖源站结构**：论坛与资讯站改版会让解析器失效，靠 `selftest.js` + Job Summary 发现问题；B站风控是常态，已做多级兜底但不保证 100% 成功。
 - **自动抽取会有误差**：置信度与待审队列是护栏，不是保证。重要信息请点「发布页 ↗」回原帖核对。
@@ -391,3 +449,5 @@ hanhua-hub/
 - `index-standalone.html` 已重新打包并验证：外部 `<script src>` / `styles.css` 引用数为 0，离线可独立运行。
 - 云端首次真实运行：run #1 的 `deploy` 因 GitHub 产物元数据瞬时故障失败；清理重复产物后重新触发的 **run #2 全绿**（`update` 9 步 + `deploy` 5 步全部 success），自动提交 `70c5dd8` / `15eceda`，Pages 部署成功、线上页面 HTTP 200。云端比本地快照多抓到 1 条合法新增（幻想水浒传3 PS2，置信度 0.92），现为自动 619 条 / 页面合计 756 条；无页脚脏数据、无网盘泄漏。
 - **第二版（2026-11-26 晚）**：按使用偏好整体移除旧资讯站来源（人工条目、自动条目、解析器、离线样本与缓存一并清掉），接入全游网「汉化情报」栏目；新增 `MD32X` 机型识别、署名连写清洗与「已下线来源」历史条目回收。本地重跑：8 源全部 `ok`、失败源 0、待审 0、自测 55 项通过、合规泄漏 0、页脚脏数据 0、单文件版外部引用 0；自动索引 637 条 / 页面合计 759 条。
+- **本地迭代版（2026-11-26 夜，未推送）**：新增 `pan` / `panCode` 字段与「网盘渠道」筛选下拉、卡片 / 详情徽章、KPI 与作业摘要统计；`sanitizeNote()` 的替换文案保留渠道名，`fetch.js` 写盘前对全部条目（含历史）统一识别并持久化标注。本地重跑：8 源全 `ok`、新增 0 条、失败源 0、待审 0；自测由 55 项增至 **66 项全通过**；渠道标注自动条目 22 条（百度 3 / 夸克 4 / 泛称 15），页面口径含人工快照共 23 条；合规泄漏 0、`pan` 字段异常值 0、单文件版外部引用 0。无头浏览器模拟筛选：全部 759 / 含渠道 23 / 百度 3 / 夸克 4 / 无标注 736，徽章 23 个，重置正常，无 JS 错误。**当时改动暂时留在本地工作区，已于 2026-11-28 同步上线。**
+- **数据修正台（2026-11-26 夜，本地迭代，未推送）**：新增覆盖层机制（`fingerprint.js` / `data/overrides.json` / `overrides.js`）、本地服务 `editor-server.js`、写盘核心 `apply-edits.js`、离线补丁 CLI 与 `editor.html` 页面；`app.js` / `index.html` / `build.js` / 工作流同步接入。端到端验证：服务仅 127.0.0.1 可访问、非本机 Host 返回 403；保存「2 修正 + 1 删除 + 1 新增」正确落盘并生成备份、单文件版重建、主页面确认改名/删除/新增全部生效；网盘直链写入被 400 拒绝且不污染覆盖层；`/api/restore` 回滚到空覆盖层、CLI `--reset` 幂等；修正台页面在线模式、50 行表格、体检 chips 与筛选计数正常，无 JS 错误。自测 66 → **81 项全通过**，`npm run check` 覆盖 14 个 JS 文件。测试产物与备份已清理，覆盖层回到空状态。

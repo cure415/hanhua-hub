@@ -5,6 +5,10 @@
   var DATA = window.HANHUA || { asOf: "", sources: [], repos: [], items: [] };
   var AUTO = window.HANHUA_AUTO || { generatedAt: "", items: [], sources: [], report: [], stats: {} };
   var AUTO_ITEMS = Array.isArray(AUTO.items) ? AUTO.items : [];
+  // 修正覆盖层：独立于 data.js / auto-data.js，定时抓取重建自动快照也不会冲掉人工修正
+  var FP = window.HANHUA_FP || null;
+  var EMPTY_OV = { edits: {}, deleted: [], added: [] };
+  var OV = (FP && window.HANHUA_OVERRIDES) ? window.HANHUA_OVERRIDES : EMPTY_OV;
   // 有自动数据时以抓取日期为「今天」，否则退回人工快照日期
   var AS_OF = (AUTO.generatedAt && AUTO.generatedAt.slice(0, 10) > (DATA.asOf || "")) ? AUTO.generatedAt.slice(0, 10) : (DATA.asOf || "2026-11-26");
   var LS_CUSTOM = "hanhua.custom.v1";
@@ -34,7 +38,7 @@
   Object.keys(PLAT_COLORS).forEach(function (k) { PLAT_COLOR_CI[k.toUpperCase()] = PLAT_COLORS[k]; });
 
   var state = {
-    q: "", kind: "all", ai: "all", range: "all", sort: "date-desc",
+    q: "", kind: "all", ai: "all", range: "all", sort: "date-desc", pan: "all",
     platforms: new Set(), source: "", view: "cards"
   };
 
@@ -79,6 +83,23 @@
   }
   function srcName(id) { return (SRC_MAP[id] && SRC_MAP[id].name) || "未标注来源"; }
   function aiLabel(ai) { return ai === true ? "AI 辅助" : ai === false ? "明确人工" : "未标注"; }
+  var PAN_WHITELIST = ["百度网盘", "夸克网盘", "网盘（未注明）"];
+  function inferPan(note) {
+    var s = String(note || ""), out = [];
+    if (/百度网盘|百度盘|百度云盘|百度云|度盘|pan\.baidu\.com|yun\.baidu\.com/i.test(s)) out.push("百度网盘");
+    if (/夸克网盘|夸克云|夸克盘|夸克分享|夸克|pan\.quark\.cn|quark\.cn\/s\//i.test(s)) out.push("夸克网盘");
+    if (!out.length && /通过网盘分享|网盘(?:链接|地址|下载|分享)|网盘发布/i.test(s)) out.push("网盘（未注明）");
+    return out;
+  }
+  function panBadge(it) {
+    if (!it.pan || !it.pan.length) return "";
+    return '<span class="tag tag-pan" title="只标注发布渠道；链接与提取码请以原发布页为准">' +
+      esc(it.pan.join(" · ")) + (it.panCode ? " · 需提取码" : "") + "</span>";
+  }
+  function panText(it) {
+    if (!it.pan || !it.pan.length) return "未标注网盘渠道";
+    return it.pan.join(" + ") + (it.panCode ? "（发布页标注需提取码）" : "") + "；链接与提取码请以原发布页为准";
+  }
   function daysBetween(a, b) { return Math.round((new Date(b + "T00:00:00Z") - new Date(a + "T00:00:00Z")) / 86400000); }
   function toast(msg) {
     var el = $("toast");
@@ -90,6 +111,7 @@
 
   /* ------------------------------ 数据 ------------------------------ */
   function normalize(raw, prefix, idx) {
+    var panRaw = Array.isArray(raw.pan) && raw.pan.length ? raw.pan : inferPan(raw.note);
     return {
       _id: prefix + idx,
       n: String(raw.n || "未命名条目"),
@@ -106,7 +128,9 @@
       note: String(raw.note || ""),
       auto: raw.auto === true,
       confidence: typeof raw.confidence === "number" ? raw.confidence : null,
-      firstSeen: String(raw.firstSeen || "")
+      firstSeen: String(raw.firstSeen || ""),
+      pan: panRaw.filter(function (v) { return PAN_WHITELIST.indexOf(v) >= 0; }),
+      panCode: raw.panCode === true || /提取码|访问码|取货码|密码|pwd/i.test(String(raw.note || ""))
     };
   }
   function loadCustom() {
@@ -115,17 +139,34 @@
   function saveCustom(list) {
     try { localStorage.setItem(LS_CUSTOM, JSON.stringify(list)); } catch (e) { toast("浏览器存储不可用，条目仅在本次会话有效"); }
   }
+  function applyOverrides(list, prefix) {
+    if (!FP || !OV) return list;
+    var edits = OV.edits || {}, deleted = OV.deleted || [];
+    var out = [];
+    list.forEach(function (raw) {
+      var key = FP.fp(raw, prefix);
+      if (deleted.indexOf(key) >= 0) return;
+      out.push(edits[key] ? Object.assign({}, raw, edits[key]) : raw);
+    });
+    return out;
+  }
   function rebuild() {
-    var built = DATA.items.map(function (it, i) { return normalize(it, "b", i); });
+    var built = applyOverrides(DATA.items, "b").map(function (it, i) { return normalize(it, "b", i); });
     var offset = built.length;
-    var auto = AUTO_ITEMS.map(function (it, i) {
+    var auto = applyOverrides(AUTO_ITEMS, "a").map(function (it, i) {
       var o = normalize(it, "a", i);
       o._id = "a" + (offset + i);
       o.auto = true;
       return o;
     });
+    var added = (OV.added || []).map(function (it, i) {
+      var o = normalize(it, "x", i);
+      o._id = "x" + i;
+      o.auto = it.layer === "a";
+      return o;
+    });
     var custom = loadCustom().map(function (it, i) { return normalize(it, "u", i); });
-    items = built.concat(auto, custom);
+    items = built.concat(auto, added, custom);
   }
 
   /* ------------------------------ 筛选 ------------------------------ */
@@ -153,6 +194,14 @@
       if (state.ai === "unknown" && it.ai != null) return false;
       if (state.platforms.size && !state.platforms.has(it.p)) return false;
       if (state.source && it.src !== state.source) return false;
+      if (state.pan !== "all") {
+        var hb = it.pan.indexOf("百度网盘") >= 0, hq = it.pan.indexOf("夸克网盘") >= 0;
+        var panPass = {
+          any: it.pan.length > 0, baidu: hb, quark: hq,
+          both: hb && hq, none: it.pan.length === 0
+        }[state.pan];
+        if (!panPass) return false;
+      }
       if (state.range !== "all") {
         if (it.t !== "pub" || !it.d) return false;
         var delta = daysBetween(it.d, AS_OF);
@@ -174,14 +223,15 @@
   /* ------------------------------ 渲染：KPI ------------------------------ */
   function renderKpis() {
     var platforms = {};
-    var aiCount = 0, recent = 0;
+    var aiCount = 0, recent = 0, panCount = 0;
     items.forEach(function (it) {
       platforms[it.p] = 1;
       if (it.ai === true) aiCount++;
+      if (it.pan && it.pan.length) panCount++;
       if (it.t === "pub" && it.d && daysBetween(it.d, AS_OF) >= 0 && daysBetween(it.d, AS_OF) <= 30) recent++;
     });
     var cards = [
-      { n: items.length, label: "收录条目", sub: DATA.sources.length + " 个公开来源 · 其中自动抓取 " + AUTO_ITEMS.length + " 条" },
+      { n: items.length, label: "收录条目", sub: DATA.sources.length + " 个公开来源 · 自动抓取 " + AUTO_ITEMS.length + " 条 · 网盘渠道标注 " + panCount + " 条" },
       { n: Object.keys(platforms).length, label: "覆盖平台", sub: "从 FC / MD 到 PS3 / 3DS" },
       { n: recent, label: "近 30 天明确发布", sub: "仅统计确切发布日" },
       { n: aiCount, label: "标注 AI 辅助", sub: "其余未臆测标注" }
@@ -256,6 +306,7 @@
     if (it.auto) tags += '<span class="tag tag-auto">AUTO</span>';
     if (it.ai === true) tags += '<span class="tag tag-ai">AI 辅助</span>';
     if (it.v) tags += '<span class="tag tag-ver">' + esc(it.v) + "</span>";
+    tags += panBadge(it);
     var second = it.dl
       ? '<a href="' + safeUrl(it.dl) + '" target="_blank" rel="noopener noreferrer">补丁 ↗</a>'
       : '<a href="' + safeUrl(s.url) + '" target="_blank" rel="noopener noreferrer">来源 ↗</a>';
@@ -319,13 +370,14 @@
     $("drawer-body").innerHTML =
       '<div class="d-eyebrow">条目详情 · ' + esc(it._id) + "</div>" +
       "<h2>" + esc(it.n) + "</h2>" +
-      '<div class="d-badges">' + badge(it.p) + (it.auto ? '<span class="tag tag-auto">AUTO 自动抓取</span>' : "") + (it.ai === true ? '<span class="tag tag-ai">AI 辅助</span>' : "") + (it.v ? '<span class="tag tag-ver">' + esc(it.v) + "</span>" : "") + '<span class="tag">' + esc(it.k === "catalog" ? "存量清单" : "近期动态") + "</span></div>" +
+      '<div class="d-badges">' + badge(it.p) + (it.auto ? '<span class="tag tag-auto">AUTO 自动抓取</span>' : "") + (it.ai === true ? '<span class="tag tag-ai">AI 辅助</span>' : "") + (it.v ? '<span class="tag tag-ver">' + esc(it.v) + "</span>" : "") + panBadge(it) + '<span class="tag">' + esc(it.k === "catalog" ? "存量清单" : "近期动态") + "</span></div>" +
       '<dl class="d-grid">' +
         "<dt>日期</dt><dd>" + esc(dText) + "</dd>" +
         "<dt>平台</dt><dd>" + esc(it.p) + "</dd>" +
         "<dt>汉化者</dt><dd>" + esc(it.g || "未标注") + "</dd>" +
         "<dt>版本</dt><dd>" + esc(it.v || "未标注") + "</dd>" +
         "<dt>AI 参与</dt><dd>" + esc(aiLabel(it.ai)) + "</dd>" +
+        "<dt>网盘渠道</dt><dd>" + esc(panText(it)) + "</dd>" +
         "<dt>采集方式</dt><dd>" + (it.auto ? "定时自动抓取" + (it.firstSeen ? "（首次收录 " + esc(it.firstSeen) + "）" : "") + (it.confidence != null ? " · 置信度 " + it.confidence : "") : "人工整理快照 / 本机录入") + "</dd>" +
         "<dt>数据来源</dt><dd>" + esc(s.name) + '（' + esc(s.type) + "）</dd>" +
       "</dl>" +
@@ -336,7 +388,7 @@
         (it.dl ? '<a href="' + safeUrl(it.dl) + '" target="_blank" rel="noopener noreferrer">补丁 / Release ↗</a>' : "") +
         (s.url ? '<a href="' + safeUrl(s.url) + '" target="_blank" rel="noopener noreferrer">来源首页 ↗</a>' : "") +
       "</div>" +
-      '<div class="d-warn">补丁与网盘地址请以发布者原始页面为准。本站不托管 ROM / ISO，也不对第三方下载内容的安全性作保证；请合法持有原版游戏并遵守作者声明。</div>';
+      '<div class="d-warn">这里只记录「发布页标注了哪个网盘渠道」这一情报，不收录网盘链接、提取码、文件名或文件列表。补丁与下载地址请以发布者原始页面为准；本站不托管 ROM / ISO，也不对第三方下载内容的安全性作保证，请合法持有原版游戏并遵守作者声明。</div>';
     $("drawer").hidden = false;
     $("overlay").hidden = false;
   }
@@ -455,10 +507,10 @@
     renderSourceFilter();
   }
   function resetAll() {
-    state.q = ""; state.kind = "all"; state.ai = "all"; state.range = "all";
+    state.q = ""; state.kind = "all"; state.ai = "all"; state.range = "all"; state.pan = "all";
     state.sort = "date-desc"; state.platforms.clear(); state.source = "";
     $("q").value = ""; $("q-clear").hidden = true;
-    $("sel-kind").value = "all"; $("sel-ai").value = "all"; $("sel-range").value = "all"; $("sel-sort").value = "date-desc";
+    $("sel-kind").value = "all"; $("sel-ai").value = "all"; $("sel-range").value = "all"; $("sel-sort").value = "date-desc"; $("sel-pan").value = "all";
     renderPlatformChips(); render();
   }
 
@@ -469,7 +521,7 @@
       exportedAt: new Date().toISOString(),
       note: "复古汉化发布台导出。items 中仅含索引字段与发布页链接，不含 ROM / 镜像。",
       items: items.map(function (it) {
-        var o = { n: it.n, p: it.p, d: it.d, t: it.t, g: it.g, ai: it.ai, v: it.v, k: it.k, src: it.src, u: it.u, dl: it.dl, note: it.note };
+        var o = { n: it.n, p: it.p, d: it.d, t: it.t, g: it.g, ai: it.ai, v: it.v, k: it.k, src: it.src, u: it.u, dl: it.dl, note: it.note, pan: it.pan, panCode: it.panCode };
         if (it.auto) { o.auto = true; o.confidence = it.confidence; o.firstSeen = it.firstSeen; }
         return o;
       })
@@ -498,7 +550,7 @@
           var key = obj.n + "|" + obj.p + "|" + obj.d + "|" + obj.u;
           if (seen[key]) return;
           seen[key] = 1;
-          current.push({ n: obj.n, p: obj.p, d: obj.d, t: obj.t, g: obj.g, ai: obj.ai, v: obj.v, k: obj.k, src: obj.src, u: obj.u, dl: obj.dl, note: obj.note });
+          current.push({ n: obj.n, p: obj.p, d: obj.d, t: obj.t, g: obj.g, ai: obj.ai, v: obj.v, k: obj.k, src: obj.src, u: obj.u, dl: obj.dl, note: obj.note, pan: obj.pan, panCode: obj.panCode });
           added++;
         });
         saveCustom(current);
@@ -517,7 +569,7 @@
       render();
     });
     $("q-clear").addEventListener("click", function () { $("q").value = ""; state.q = ""; this.hidden = true; render(); });
-    [["sel-kind", "kind"], ["sel-ai", "ai"], ["sel-range", "range"], ["sel-sort", "sort"]].forEach(function (pair) {
+    [["sel-kind", "kind"], ["sel-ai", "ai"], ["sel-range", "range"], ["sel-sort", "sort"], ["sel-pan", "pan"]].forEach(function (pair) {
       $(pair[0]).addEventListener("change", function (e) { state[pair[1]] = e.target.value; render(); });
     });
     $("platform-chips").addEventListener("click", function (e) {

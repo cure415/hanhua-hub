@@ -6,9 +6,11 @@
   "scripts": {
     "fetch": "node scripts/fetch.js",
     "build": "node scripts/build.js",
+    "editor": "node scripts/editor-server.js",
+    "apply-fixes": "node scripts/apply-fixes.js",
     "update": "node scripts/selftest.js && node scripts/fetch.js && node scripts/build.js",
     "test": "node scripts/selftest.js",
-    "check": "node --check data.js && node --check app.js && node --check auto-data.js && node --check scripts/fetch.js && node --check scripts/selftest.js && node --check scripts/build.js"
+    "check": "node --check fingerprint.js && node --check data.js && node --check app.js && node --check auto-data.js && node --check overrides.js && node --check scripts/lib.js && node --check scripts/parsers.js && node --check scripts/sources.js && node --check scripts/fetch.js && node --check scripts/selftest.js && node --check scripts/build.js && node --check scripts/apply-edits.js && node --check scripts/editor-server.js && node --check scripts/apply-fixes.js"
   },
   "engines": { "node": ">=18" },
   "dependencies": {}

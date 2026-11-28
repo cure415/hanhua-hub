@@ -191,11 +191,37 @@ function absoluteUrl(href, base) {
   try { return new URL(String(href).replace(/&amp;/g, "&"), base).toString(); } catch (e) { return ""; }
 }
 
-/** 备注里也不保留网盘直链 / 提取码 / 镜像地址，只提示回到原发布页 */
+/** 合规：只保留「发布渠道名」这个事实，绝不返回链接 / 提取码 / 文件名 */
+const PAN_CHANNELS = [
+  { key: "baidu", label: "百度网盘", re: /百度网盘|百度盘|百度云盘|百度云|度盘|pan\.baidu\.com|yun\.baidu\.com|baidu\.com\/s\//i },
+  { key: "quark", label: "夸克网盘", re: /夸克网盘|夸克云|夸克盘|夸克分享|夸克|pan\.quark\.cn|quark\.cn\/s\//i }
+];
+function detectPanChannels(text) {
+  const s = String(text || "");
+  const out = [];
+  PAN_CHANNELS.forEach(function (c) { if (c.re.test(s)) out.push(c.label); });
+  if (!out.length && /通过网盘分享|网盘(?:链接|地址|下载|分享)|网盘发布|链接\s*[:：]\s*百度盘/i.test(s)) {
+    out.push("网盘（未注明）");
+  }
+  return out;
+}
+/** 只标记「是否需要提取码」这一布尔事实，不取值 */
+function hasPanCode(text) {
+  const s = String(text || "");
+  return /(?:提取码|访问码|取货码|密码|pwd)\s*[:：=]?/i.test(s) || /提取码已省略/.test(s);
+}
+
+/** 备注里也不保留网盘直链 / 提取码 / 镜像地址，只提示回到原发布页。
+ *  替换文案保留渠道名，让上面的渠道识别在清洗之后依然可用。 */
 function sanitizeNote(text) {
   return String(text || "")
-    .replace(/https?:\/\/[^\s<>"'）)]*(?:pan\.baidu|pan\.quark|quark\.cn|lanzou|123pan|aliyundrive|pan\.xunlei)[^\s<>"'）)]*/gi, "［网盘链接已省略，见原发布页］")
-    .replace(/(?:https?:\/\/)?[^\s<>"']{0,30}(?:baidu\.com|quark\.cn|lanzou|123pan|aliyundrive)[^\s<>"']*/gi, "［网盘链接已省略］")
+    .replace(/https?:\/\/[^\s<>"'）)]*pan\.baidu[^\s<>"'）)]*/gi, "［百度网盘链接已省略，见原发布页］")
+    .replace(/https?:\/\/[^\s<>"'）)]*(?:pan\.quark|quark\.cn)[^\s<>"'）)]*/gi, "［夸克网盘链接已省略，见原发布页］")
+    .replace(/https?:\/\/[^\s<>"'）)]*(?:lanzou|123pan|aliyundrive|pan\.xunlei)[^\s<>"'）)]*/gi, "［网盘链接已省略，见原发布页］")
+    .replace(/(?:https?:\/\/)?[^\s<>"']{0,30}(?:baidu\.com|quark\.cn)[^\s<>"']*/gi, function (m) {
+      return /quark|夸克/i.test(m) ? "［夸克网盘链接已省略］" : "［百度网盘链接已省略］";
+    })
+    .replace(/(?:https?:\/\/)?[^\s<>"']{0,30}(?:lanzou|123pan|aliyundrive)[^\s<>"']*/gi, "［网盘链接已省略］")
     .replace(/(?:链接?|链|度盘|把盘)\s*[:：]?\s*\/?s\/[A-Za-z0-9_\-\u4e00-\u9fff?=&%]*/gi, "［网盘路径已省略］")
     .replace(/\/s\/[A-Za-z0-9_\-\u4e00-\u9fff?=&%]{4,}/gi, "［网盘路径已省略］")
     .replace(/(?:提取码|密码|pwd)\s*[:：=]?\s*[A-Za-z0-9]{4,8}/gi, "［提取码已省略］")
@@ -238,5 +264,5 @@ module.exports = {
   UA, sleep, getText, getJson, decode, textOf, linesOf, firstLine,
   normalizePlatform, detectPlatform, detectAI, detectVersion, toISODate,
   tidy, cleanName, safeIndexUrl, sanitizeNote, absoluteUrl, sha1, nameKey, itemKey, namePlatKey,
-  validItem, scoreItem, BLOCKED_URL
+  validItem, scoreItem, BLOCKED_URL, PAN_CHANNELS, detectPanChannels, hasPanCode
 };

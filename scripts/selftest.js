@@ -32,6 +32,20 @@ ok(L.detectAI("CLARK.H&killllme&阿刃") === null, "AI 关键词不做子串误�
 ok(L.detectAI("全程使用GPT-6.1 SOL进行汉化") === true, "GPT 汉化标注为 AI 辅助");
 ok(L.safeIndexUrl("https://pan.baidu.com/s/abcd") === "", "网盘直链被拒绝");
 ok(L.sanitizeNote("链接: https://pan.baidu.com/s/1abc?pwd=xyz 提取码: xyz").indexOf("pan.baidu") < 0, "备注里的网盘链接被抹掉");
+section("网盘渠道情报（只记渠道名）");
+ok(L.detectPanChannels("通过网盘分享的文件：XXX https://pan.baidu.com/s/1abc 提取码 abcd").join() === "百度网盘", "百度网盘渠道被识别");
+ok(L.detectPanChannels("夸克网盘链接 https://pan.quark.cn/s/def").join() === "夸克网盘", "夸克网盘渠道被识别");
+ok(L.detectPanChannels("百度网盘 + 夸克网盘 双版本").length === 2, "双渠道分别标注");
+ok(L.detectPanChannels("通过网盘分享的文件：XXX 链接").join() === "网盘（未注明）", "只说网盘没点名时标为未注明");
+ok(L.detectPanChannels("纯文本说明，没有下载信息").length === 0, "无关文本不误标");
+const panNote = L.sanitizeNote("下载 https://pan.baidu.com/s/1abc?pwd=xyz 与 https://pan.quark.cn/s/def 提取码: abcd 游戏.iso");
+ok(!/pan\.baidu|quark\.cn|\.iso|提取码\s*[:：]\s*[A-Za-z0-9]{4,8}/i.test(panNote), "链接 / 提取码取值 / 镜像名仍被清洗", panNote);
+ok(L.detectPanChannels(panNote).join("+") === "百度网盘+夸克网盘", "清洗后的占位文案仍保留渠道名", panNote);
+ok(L.hasPanCode(panNote) === true, "是否需要提取码只留布尔标记");
+ok(L.hasPanCode("只写了发布说明") === false, "无提取码时不误标");
+const panRecord = { note: panNote, pan: L.detectPanChannels(panNote), panCode: L.hasPanCode(panNote) };
+ok(!/https?:\/\/|\/s\/[A-Za-z0-9]|[A-Za-z0-9]{4}\.iso/i.test(JSON.stringify(panRecord)), "写盘对象里没有任何链接或提取码取值");
+ok(panRecord.pan.every(function (v) { return /^(百度网盘|夸克网盘|网盘（未注明）)$/.test(v); }), "渠道字段只含白名单渠道名");
 
 /* ------------------------------ B站 ------------------------------ */
 section("B站每日汇总");
@@ -144,6 +158,42 @@ const leaked = all.filter(function (x) {
 ok(leaked.length === 0, "所有条目的链接 / 备注都不含 ROM、镜像与网盘直链", "泄漏 " + leaked.length + " 条");
 ok(all.every(function (x) { return /^https?:\/\//.test(x.u); }), "每条都有可回溯的发布页 URL");
 ok(all.every(function (x) { return ["pub", "list", "ver", ""].indexOf(x.t) >= 0; }), "日期性质字段合法");
+
+/* ------------------------------ 数据修正台覆盖层 ------------------------------ */
+section("数据修正台覆盖层");
+const E = require("./apply-edits");
+const FP = require("../fingerprint");
+const fpSample = { n: "测试游戏", p: "PS2", u: "https://example.com/post/1" };
+ok(FP.fp(fpSample, "b") === FP.fp(Object.assign({}, fpSample), "b"), "同一条目指纹稳定");
+ok(FP.fp(fpSample, "a") !== FP.fp(fpSample, "b"), "人工层与自动层指纹不同");
+ok(FP.fp(fpSample, "b") !== FP.fp(Object.assign({}, fpSample, { n: "改名后" }), "b"), "改名会改变指纹，故按修正前的值定位");
+ok(FP.fp(fpSample, "b") === FP.fp(Object.assign({}, fpSample, { p: "ps2" }), "b"), "平台大小写不影响指纹");
+const ovBase = E.collect();
+const keyB = ovBase.manual[0] && ovBase.manual[0]._key;
+const keyA = ovBase.autoItems[0] && ovBase.autoItems[0]._key;
+ok(!!keyB && !!keyA, "人工 / 自动快照都能生成定位键");
+const legal = E.validate({ version: 1, edits: { [keyB]: { note: "修正台自测备注" } }, deleted: [], added: [] });
+ok(legal.ok, "合法修正通过校验", (legal.errors || []).join("；"));
+const badUrl = E.validate({ version: 1, edits: { [keyB]: { u: "https://pan.baidu.com/s/abcd" } }, deleted: [], added: [] });
+ok(!badUrl.ok && badUrl.errors.some(function (x) { return /网盘/.test(x); }), "网盘直链写入被拒绝");
+const badField = E.validate({ version: 1, edits: { [keyB]: { notAField: 1 } }, deleted: [], added: [] });
+ok(!badField.ok, "未登记字段被拒绝");
+const orphan = E.validate({ version: 1, edits: { "b:deadbeefdeadbeef": { n: "幽灵" } }, deleted: [], added: [] });
+ok(!orphan.ok, "快照里不存在的定位键被拒绝");
+const bulk = { version: 1, edits: {}, deleted: [], added: [] };
+for (let bi = 0; bi < 51; bi++) bulk.deleted.push("b:fake" + bi);
+const bulkRes = E.validate(bulk);
+ok(!bulkRes.ok && bulkRes.errors.some(function (x) { return /50 条上限/.test(x); }), "单次删除超过 50 条被拦截");
+const cleanNote = E.validate({ version: 1, edits: { [keyB]: { note: "下载 https://pan.baidu.com/s/abc 提取码: abcd" } }, deleted: [], added: [] });
+ok(cleanNote.ok && !/pan\.baidu/.test(JSON.stringify(cleanNote.value)), "修正备注里的网盘链接与提取码先清洗再入库");
+const applied = E.applyTo(ovBase.manual.concat(ovBase.autoItems), {
+  edits: { [keyB]: { n: "被改名的游戏" } }, deleted: [keyA],
+  added: [{ layer: "b", n: "新增测试", p: "SFC", u: "https://example.com/new", src: "bili1015" }]
+});
+ok(applied.length === ovBase.manual.length + ovBase.autoItems.length, "应用覆盖层后条目数正确");
+ok(applied[0].n === "被改名的游戏" && applied[0]._key === keyB, "修正生效且定位键仍是修正前指纹");
+ok(!applied.some(function (x) { return x._key === keyA; }), "删除生效");
+ok(applied.some(function (x) { return x._added && x.n === "新增测试"; }), "新增生效");
 
 console.log("\n—— 自测结果：" + passed + " 通过 / " + failed + " 失败 ——");
 if (failed) process.exit(1);

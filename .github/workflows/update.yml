@@ -68,7 +68,7 @@ jobs:
         run: |
           git config user.name "hanhua-index-bot"
           git config user.email "hanhua-index-bot@users.noreply.github.com"
-          git add auto-data.js index-standalone.html data/ || true
+          git add auto-data.js overrides.js index-standalone.html data/ || true
           if git diff --cached --quiet; then
             echo "本次无新增条目，跳过提交"
           else

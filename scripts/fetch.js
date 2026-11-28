@@ -325,13 +325,28 @@ const DISPATCH = {
     }).slice(0, MAX_AUTO_ITEMS);
   }
   // 写盘前统一复洗：连历史条目的备注也按最新合规规则清理一遍
+  // 同时把「通过哪个网盘渠道发布」结构化成 pan 字段；只存渠道名与是否需提取码，
+  // 链接 / 提取码 / 文件名一律不落地。
   items = items.map(function (it) {
     // 已下线来源的字样也可能出现在别的源的汉化者署名里（如「飞眼&围炉Go」），写盘前一并清掉
     const g = String(it.g || "")
       .replace(/[&＆]?\s*围炉\s*Go\s*/gi, "")
       .replace(/^[&＆\s、,，]+|[&＆\s、,，]+$/g, "")
       .trim().slice(0, 30);
-    return Object.assign({}, it, { g: g, note: L.sanitizeNote(it.note) });
+    const note = L.sanitizeNote(it.note);
+    const probe = String(it.note || "") + " " + note;
+    const detected = L.detectPanChannels(probe);
+    // 历史条目的原始文本在上一轮已被清洗掉，渠道名无法还原；
+    // 这时保留上一轮已经识别出的 pan，避免每轮复洗把标注冲掉。
+    const prevPan = Array.isArray(it.pan) ? it.pan.filter(function (v) {
+      return typeof v === "string" && v.length <= 12 && !/https?:|\/|\d/.test(v);
+    }) : [];
+    return Object.assign({}, it, {
+      g: g,
+      note: note,
+      pan: detected.length ? detected : prevPan,
+      panCode: L.hasPanCode(probe) || it.panCode === true
+    });
   }).filter(function (it) { return L.validItem(it); });
 
   const generatedAt = new Date().toISOString();
@@ -339,7 +354,7 @@ const DISPATCH = {
     generatedAt: generatedAt,
     asOf: generatedAt.slice(0, 10),
     minConfidence: MIN_CONFIDENCE,
-    note: "由 scripts/fetch.js 自动抓取生成。仅索引发布者原始页面，不含 ROM / ISO / 网盘直链。日期性质：pub=明确发布日，list=汇总/检索日，ver=版本日期码。",
+    note: "由 scripts/fetch.js 自动抓取生成。仅索引发布者原始页面，不含 ROM / ISO / 网盘直链。pan 只记录发布页标注的网盘渠道名，panCode 只标记是否需要提取码，均不含链接、提取码取值或文件名。日期性质：pub=明确发布日，list=汇总/检索日，ver=版本日期码。",
     sources: enabled.map(function (s) { return sourceDescriptor(s, generatedAt); }),
     report: report,
     stats: {
@@ -348,12 +363,17 @@ const DISPATCH = {
       pendingReview: pending.length,
       sourcesOk: report.filter(function (r) { return r.status === "ok"; }).length,
       sourcesError: report.filter(function (r) { return r.status === "error"; }).length,
-      elapsedMs: report.reduce(function (a, r) { return a + r.ms; }, 0)
+      elapsedMs: report.reduce(function (a, r) { return a + r.ms; }, 0),
+      panChannelItems: items.filter(function (it) { return it.pan && it.pan.length; }).length,
+      panBaidu: items.filter(function (it) { return (it.pan || []).indexOf("百度网盘") >= 0; }).length,
+      panQuark: items.filter(function (it) { return (it.pan || []).indexOf("夸克网盘") >= 0; }).length,
+      panWithCode: items.filter(function (it) { return it.panCode === true; }).length
     },
     items: items
   };
 
   console.log("—— 合计：本次新增 " + newItems.length + " 条，自动索引共 " + items.length + " 条，待审 " + pending.length + " 条，失败源 " + payload.stats.sourcesError + " 个");
+  console.log("—— 网盘渠道情报：标注 " + payload.stats.panChannelItems + " 条（百度 " + payload.stats.panBaidu + " / 夸克 " + payload.stats.panQuark + "），含提取码 " + payload.stats.panWithCode + " 条；链接与提取码均未入库");
 
   if (!OPT.dryRun) {
     writeJson(path.join(DATA_DIR, "auto.json"), payload);
@@ -375,7 +395,8 @@ const DISPATCH = {
       "## 复古汉化发布台 · 定时抓取", "",
       "- 生成时间：" + generatedAt,
       "- 自动索引条目：**" + items.length + "**（本次新增 " + newItems.length + "）",
-      "- 待人工复核：" + pending.length + " · 失败源：" + payload.stats.sourcesError, "",
+      "- 待人工复核：" + pending.length + " · 失败源：" + payload.stats.sourcesError,
+      "- 网盘渠道情报：标注 **" + payload.stats.panChannelItems + "** 条（百度 " + payload.stats.panBaidu + " / 夸克 " + payload.stats.panQuark + "），含提取码 " + payload.stats.panWithCode + " 条；仅渠道名，不含链接与提取码", "",
       "| 数据源 | 状态 | 新增 | 说明 |", "| --- | --- | ---: | --- |"
     ];
     report.forEach(function (r) {

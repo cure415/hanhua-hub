@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>数据修正台 · 复古汉化发布台</title>
+<style>
+:root{--bg:#f6f4ef;--surface:#fff;--surface-2:#f1eee7;--surface-3:#faf8f4;--ink:#202a33;--ink-2:#5b6874;--ink-3:#8c98a3;--line:#e3ded4;--line-2:#eeeae1;--accent:#b5522e;--accent-soft:#f9e8df;--accent-ink:#8e3d20;--blue:#2c6d8f;--green:#3d7a58;--amber:#a97717;--red:#b23b3b;--mono:ui-monospace,Consolas,"Liberation Mono",monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#141a20;--surface:#1c242c;--surface-2:#232d37;--surface-3:#1f2831;--ink:#e9eef3;--ink-2:#aab7c3;--ink-3:#7e8c99;--line:#303c47;--line-2:#2a3540;--accent:#e08a60;--accent-soft:#3b2a22;--accent-ink:#f0ad89;--blue:#79b6d6;--green:#7cc49a;--amber:#dfb45f;--red:#ef8b8b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
+a{color:var(--blue);text-decoration:none}button,input,select,textarea{font:inherit;color:inherit}
+header{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.brand{font-size:15px;font-weight:600;margin-right:6px}.brand small{font:10px var(--mono);color:var(--ink-3);margin-left:8px;letter-spacing:.08em}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;background:var(--surface-2);color:var(--ink-2)}
+.pill.online{background:rgba(61,122,88,.14);color:var(--green)}.pill.offline{background:rgba(169,119,23,.16);color:var(--amber)}
+.hint{color:var(--ink-3);font-size:11.5px}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:var(--surface);padding:5px 11px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:hover{filter:brightness(1.07)}
+.btn.danger{border-color:var(--red);color:var(--red)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn .cnt{display:inline-block;min-width:16px;padding:0 4px;margin-left:4px;border-radius:9px;background:rgba(255,255,255,.24);font:10px var(--mono)}
+section{padding:10px 16px}
+.audit{display:flex;flex-wrap:wrap;gap:7px;align-items:center;border-bottom:1px solid var(--line);background:var(--surface-3)}
+.audit .lbl{color:var(--ink-3);font-size:11.5px;margin-right:3px}
+.ichip{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:11.5px}
+.ichip.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink)}
+.ichip.zero{opacity:.5}
+.toolbar,.bulk{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-bottom:1px solid var(--line)}
+.toolbar input[type=search]{width:260px}.toolbar input,.toolbar select,.bulk input,.bulk select{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:5px 8px}
+.toolbar select{max-width:180px}.bulk{background:var(--accent-soft);padding:8px 16px}
+.toolbar label{display:flex;align-items:center;gap:4px;color:var(--ink-2);font-size:12px}
+#count{color:var(--ink-2);font-size:12px;margin-left:auto}
+.tablewrap{overflow:auto;max-height:calc(100vh - 230px);border-bottom:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;min-width:1180px;font-size:12px}
+th,td{padding:6px 9px;border-bottom:1px solid var(--line-2);text-align:left;vertical-align:top;white-space:nowrap}
+th{position:sticky;top:0;background:var(--surface-2);z-index:2;font-weight:600;color:var(--ink-2);font-size:11px}
+tr:hover td{background:var(--surface-3)}tr.sel td{background:var(--accent-soft)}
+td.note{max-width:300px;white-space:normal;color:var(--ink-2)}
+td.name{max-width:240px;white-space:normal;font-weight:500}
+.mono{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.tagx{display:inline-block;padding:1px 5px;border-radius:4px;background:var(--surface-2);color:var(--ink-2);font-size:10.5px;margin-right:3px}
+.tagx.edit{background:rgba(169,119,23,.16);color:var(--amber)}
+.tagx.del{background:rgba(178,59,59,.14);color:var(--red)}
+.tagx.add{background:rgba(61,122,88,.14);color:var(--green)}
+.tagx.issue{background:rgba(178,59,59,.12);color:var(--red)}
+.pager{display:flex;gap:8px;align-items:center;padding:9px 16px;color:var(--ink-2);font-size:12px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:40}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100vw);background:var(--surface);z-index:50;overflow:auto;padding:18px;border-left:1px solid var(--line);box-shadow:-8px 0 30px rgba(0,0,0,.14)}
+.drawer h2{font-size:16px;margin:0 0 4px}.drawer .sub{color:var(--ink-3);font-size:11.5px;margin-bottom:14px}
+.frow{display:grid;grid-template-columns:82px 1fr;gap:8px;align-items:start;margin-bottom:9px}
+.frow label{color:var(--ink-2);padding-top:5px;font-size:12px}
+.frow input,.frow select,.frow textarea{width:100%;border:1px solid var(--line);background:var(--surface-3);border-radius:6px;padding:5px 8px}
+.frow textarea{min-height:76px;resize:vertical}
+.orig{color:var(--ink-3);font-size:11px;margin-top:3px;word-break:break-all}
+.chk{display:flex;flex-wrap:wrap;gap:10px;padding-top:5px}.chk label{display:flex;gap:4px;align-items:center;color:var(--ink);padding:0}
+.drawer-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+.modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(620px,94vw);max-height:82vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;z-index:60;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal h3{margin:0 0 8px;font-size:15px}.modal pre{background:var(--surface-3);border:1px solid var(--line-2);border-radius:7px;padding:10px;max-height:330px;overflow:auto;font:11.5px/1.6 var(--mono);white-space:pre-wrap;word-break:break-all}
+.modal .list{display:flex;flex-direction:column;gap:5px;margin:10px 0}.modal .list button{text-align:left}
+.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 18px;border-radius:8px;z-index:80;font-size:12.5px}
+.warn{background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent-ink);padding:8px 11px;border-radius:7px;font-size:12px;margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">数据修正台 <small>DATA EDITOR</small></div>
+  <span class="pill" id="mode">检测中…</span>
+  <span class="hint" id="ovstat"></span>
+  <span class="spacer"></span>
+  <a class="btn" href="index.html">← 返回索引</a>
+  <button class="btn" id="btn-refresh" type="button" title="重新读取本地文件">刷新</button>
+  <button class="btn" id="btn-undo" type="button" title="Ctrl+Z">撤销</button>
+  <button class="btn" id="btn-backups" type="button">备份 / 回滚</button>
+  <button class="btn" id="btn-export" type="button">导出补丁</button>
+  <button class="btn" id="btn-rebuild" type="button">重建单文件版</button>
+  <button class="btn primary" id="btn-save" type="button">保存修正 <span class="cnt" id="dirty">0</span></button>
+</header>
+
+<section class="audit" id="audit"><span class="lbl">数据体检</span></section>
+
+<section class="toolbar">
+  <input id="q" type="search" placeholder="搜游戏名 / 汉化者 / 备注 / URL">
+  <select id="f-layer"><option value="">全部层</option><option value="b">人工快照</option><option value="a">自动抓取</option><option value="x">修正台新增</option></select>
+  <select id="f-source"></select>
+  <select id="f-platform"></select>
+  <select id="f-issue"><option value="">全部问题类型</option></select>
+  <select id="f-pan"><option value="">网盘渠道：全部</option><option value="any">含渠道</option><option value="百度网盘">百度网盘</option><option value="夸克网盘">夸克网盘</option></select>
+  <label><input id="f-edited" type="checkbox"> 仅看已修正</label>
+  <select id="page-size"><option value="25">25 条/页</option><option value="50" selected>50 条/页</option><option value="100">100 条/页</option><option value="99999">全部</option></select>
+  <span id="count"></span>
+</section>
+
+<section class="bulk" id="bulk" hidden>
+  <span>已选 <b id="sel-count">0</b> 条</span>
+  <select id="bulk-field">
+    <option value="p">平台</option><option value="d">日期</option><option value="t">日期性质</option>
+    <option value="g">汉化者</option><option value="v">版本</option><option value="k">数据范围</option>
+    <option value="src">来源 id</option><option value="u">发布页</option><option value="note">备注</option>
+  </select>
+  <input id="bulk-value" placeholder="统一设为这个值（留空＝清空）" style="width:230px">
+  <button class="btn" id="bulk-apply" type="button">批量赋值</button>
+  <button class="btn" id="bulk-regex" type="button">正则替换</button>
+  <button class="btn danger" id="bulk-delete" type="button">删除选中</button>
+  <button class="btn" id="bulk-clear" type="button">取消选择</button>
+</section>
+
+<div class="tablewrap">
+  <table>
+    <thead><tr>
+      <th><input type="checkbox" id="chk-all" title="选中本页全部"></th><th>#</th><th>游戏名</th><th>平台</th>
+      <th>日期</th><th>性质</th><th>来源</th><th>汉化者</th><th>AI</th><th>版本</th><th>网盘渠道</th>
+      <th>备注</th><th>置信度</th><th>操作</th>
+    </tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+<div class="pager">
+  <button class="btn" id="pg-prev" type="button">← 上一页</button>
+  <span id="pg-info"></span>
+  <button class="btn" id="pg-next" type="button">下一页 →</button>
+  <span class="spacer"></span>
+  <button class="btn" id="btn-add" type="button">＋ 新增条目</button>
+</div>
+
+<div class="overlay" id="overlay" hidden></div>
+<aside class="drawer" id="drawer" hidden></aside>
+<div class="modal" id="modal" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="fingerprint.js"></script>
+<script src="data.js"></script>
+<script src="auto-data.js"></script>
+<script src="overrides.js"></script>
+<script>
+(function () {
+  "use strict";
+  var FP = window.HANHUA_FP;
+  var BASE = window.HANHUA || { asOf: "", sources: [], items: [] };
+  var AUTO = window.HANHUA_AUTO || { generatedAt: "", items: [], sources: [] };
+  var OV0 = window.HANHUA_OVERRIDES || { version: 1, edits: {}, deleted: [], added: [] };
+  var FIELDS = ["n","p","d","t","g","ai","v","k","src","u","dl","note","pan","panCode","confidence"];
+  var PAN_WHITELIST = ["百度网盘","夸克网盘","网盘（未注明）"];
+  var STRING_FIELDS = ["n","p","d","t","g","v","k","src","u","dl","note"];
+  var ISSUE_LABELS = {
+    name: "名称可疑", date: "日期/性质不匹配", platform: "平台可疑", url: "发布页异常",
+    note: "备注含清洗占位", duplicate: "同名同平台重复", confidence: "低置信度",
+    source: "来源未登记", pan: "网盘渠道异常"
+  };
+  var KNOWN_PLAT = ["PS2","PS1","PSP","PS3","PSV","SFC","FC","MD","MD32X","SS","GBA","GBC","GB","NDS","3DS","N64","NGC","DC","PCE","WSC","WS","NGCD","Switch","WiiU","Wii","Xbox","Android","PC","MS","PC88","PC98","其他"];
+
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(v) { return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function eq(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+  function toast(msg) { var t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._t); t._t = setTimeout(function () { t.hidden = true; }, 2800); }
+
+  if (!FP) { document.body.innerHTML = '<div style="padding:30px">指纹模块 fingerprint.js 未加载，无法安全定位条目。请通过 editor.html 所在目录打开页面。</div>'; return; }
+
+  /* ------------------------------ 来源 / 平台 ------------------------------ */
+  var SOURCES = (BASE.sources || []).slice();
+  (AUTO.sources || []).forEach(function (s) { if (!SOURCES.some(function (x) { return x.id === s.id; })) SOURCES.push(s); });
+  SOURCES.push({ id: "custom", name: "本机录入 / 导入", type: "本地" });
+  var SRC_MAP = {}; SOURCES.forEach(function (s) { SRC_MAP[s.id] = s; });
+  var AS_OF = (AUTO.generatedAt || "").slice(0, 10) || BASE.asOf || "";
+
+  /* ------------------------------ 状态 ------------------------------ */
+  var ov = clone(OV0);
+  ov.version = 1; ov.edits = ov.edits || {}; ov.deleted = ov.deleted || []; ov.added = ov.added || [];
+  var saved = clone(ov);
+  var undoStack = [];
+  var selected = new Set();
+  var page = 0;
+  var online = false;
+  var items = [];
+  var issues = {};
+
+  function pushUndo() { undoStack.push(clone(ov)); if (undoStack.length > 60) undoStack.shift(); }
+
+  function buildItems() {
+    var out = [];
+    (BASE.items || []).forEach(function (it) { out.push(Object.assign({}, it, { _key: FP.fp(it, "b"), _layer: "b", _orig: it })); });
+    (AUTO.items || []).forEach(function (it) { out.push(Object.assign({}, it, { _key: FP.fp(it, "a"), _layer: "a", _orig: it })); });
+    out = out.filter(function (it) { return ov.deleted.indexOf(it._key) < 0; }).map(function (it) {
+      var e = ov.edits[it._key];
+      return e ? Object.assign({}, it, e, { _edited: Object.keys(e) }) : it;
+    });
+    (ov.added || []).forEach(function (raw, i) {
+      out.push(Object.assign({}, raw, {
+        _key: "x:" + FP.fp(raw, raw.layer === "a" ? "a" : "b") + ":" + i,
+        _layer: "x", _idx: i, _added: true, auto: raw.layer === "a"
+      }));
+    });
+    return out;
+  }
+
+  /* ------------------------------ 数据体检 ------------------------------ */
+  function audit(list) {
+    var res = {};
+    function mark(t, key) { (res[t] = res[t] || []).push(key); }
+    var dup = {};
+    list.forEach(function (it) { var k = String(it.n || "") + "|" + String(it.p || "").toUpperCase(); dup[k] = (dup[k] || 0) + 1; });
+    list.forEach(function (it) {
+      var n = String(it.n || ""), note = String(it.note || "");
+      if (n.length < 2 || /https?:\/\/|<|>|下载|附件|链接|Processed in|queries|second\(s\)|Gzip/i.test(n)) mark("name", it._key);
+      var hasD = /^\d{4}-\d{2}-\d{2}$/.test(it.d || ""), hasT = !!it.t;
+      if ((hasD && !hasT) || (!hasD && hasT) || (hasD && AS_OF && it.d > AS_OF)) mark("date", it._key);
+      if (!it.p || KNOWN_PLAT.indexOf(String(it.p).toUpperCase()) < 0 || it.p === "其他") mark("platform", it._key);
+      if (!/^https?:\/\//i.test(it.u || "") || /pan\.(baidu|quark)|lanzou|123pan|\.iso|\.rom|magnet:/i.test(it.u || "")) mark("url", it._key);
+      if (/［[^］]*］/.test(note)) mark("note", it._key);
+      if (dup[n + "|" + String(it.p || "").toUpperCase()] > 1) mark("duplicate", it._key);
+      if (typeof it.confidence === "number" && it.confidence < 0.6) mark("confidence", it._key);
+      if (it.src && !SRC_MAP[it.src]) mark("source", it._key);
+      if (Array.isArray(it.pan) && it.pan.some(function (v) { return PAN_WHITELIST.indexOf(v) < 0; })) mark("pan", it._key);
+    });
+    return res;
+  }
+
+  /* ------------------------------ 筛选 / 渲染 ------------------------------ */
+  function filtered() {
+    var q = $("q").value.trim().toLowerCase();
+    var layer = $("f-layer").value, src = $("f-source").value, plat = $("f-platform").value;
+    var issue = $("f-issue").value, pan = $("f-pan").value, onlyEdited = $("f-edited").checked;
+    return items.filter(function (it) {
+      if (q) {
+        var hay = [it.n, it.g, it.v, it.note, it.u, it.p, it.src].join(" ").toLowerCase();
+        if (hay.indexOf(q) < 0) return false;
+      }
+      if (layer && it._layer !== layer) return false;
+      if (src && it.src !== src) return false;
+      if (plat && String(it.p).toUpperCase() !== plat) return false;
+      if (issue && (issues[issue] || []).indexOf(it._key) < 0) return false;
+      if (pan) {
+        var ps = Array.isArray(it.pan) ? it.pan : [];
+        if (pan === "any" ? !ps.length : ps.indexOf(pan) < 0) return false;
+      }
+      if (onlyEdited && !it._edited && !it._added) return false;
+      return true;
+    });
+  }
+  function sourceLabel(id) { return SRC_MAP[id] ? SRC_MAP[id].name : String(id || "—"); }
+  function panLabel(it) {
+    var ps = Array.isArray(it.pan) ? it.pan : [];
+    return ps.length ? esc(ps.join(" + ")) + (it.panCode ? " · 需提取码" : "") : '<span class="mono">—</span>';
+  }
+  function renderTable() {
+    var list = filtered(), size = Number($("page-size").value);
+    var pages = Math.max(1, Math.ceil(list.length / size));
+    if (page >= pages) page = pages - 1;
+    var rows = list.slice(page * size, (page + 1) * size);
+    $("tbody").innerHTML = rows.map(function (it, i) {
+      var tags = "";
+      if (it._edited && it._edited.length) tags += '<span class="tagx edit">改 ' + it._edited.length + "</span>";
+      if (it._added) tags += '<span class="tagx add">新增</span>';
+      var probs = Object.keys(issues).filter(function (k) { return (issues[k] || []).indexOf(it._key) >= 0; });
+      if (probs.length) tags += '<span class="tagx issue" title="' + esc(probs.map(function (k) { return ISSUE_LABELS[k]; }).join("、")) + '">问题 ' + probs.length + "</span>";
+      return '<tr class="' + (selected.has(it._key) ? "sel" : "") + '" data-key="' + esc(it._key) + '">' +
+        '<td><input type="checkbox" class="rowchk" data-key="' + esc(it._key) + '"' + (selected.has(it._key) ? " checked" : "") + "></td>" +
+        '<td class="mono">' + (page * size + i + 1) + "</td>" +
+        '<td class="name">' + tags + esc(it.n) + "</td>" +
+        "<td>" + esc(it.p) + "</td><td class=\"mono\">" + esc(it.d || "—") + "</td>" +
+        "<td>" + esc(it.t || "—") + '</td><td class="mono" title="' + esc(sourceLabel(it.src)) + '">' + esc(it.src) + "</td>" +
+        "<td>" + esc(it.g || "—") + "</td><td>" + (it.ai === true ? "AI" : it.ai === false ? "人工" : "—") + "</td>" +
+        "<td>" + esc(it.v || "—") + "</td><td>" + panLabel(it) + "</td>" +
+        '<td class="note">' + esc((it.note || "").slice(0, 90)) + ((it.note || "").length > 90 ? "…" : "") + "</td>" +
+        '<td class="mono">' + (typeof it.confidence === "number" ? it.confidence : "—") + "</td>" +
+        '<td><button class="btn editbtn" data-key="' + esc(it._key) + '" type="button">编辑</button></td></tr>';
+    }).join("") || '<tr><td colspan="14" style="padding:26px;text-align:center;color:var(--ink-3)">没有匹配的条目</td></tr>';
+    $("count").textContent = "筛选 " + list.length + " / 共 " + items.length + " 条";
+    $("pg-info").textContent = "第 " + (page + 1) + " / " + pages + " 页";
+    $("pg-prev").disabled = page <= 0; $("pg-next").disabled = page >= pages - 1;
+    $("chk-all").checked = rows.length > 0 && rows.every(function (it) { return selected.has(it._key); });
+    renderBulk();
+  }
+  function renderAudit() {
+    var html = '<span class="lbl">数据体检</span><button class="ichip' + ($("f-issue").value ? "" : " active") + '" data-issue="">全部</button>';
+    Object.keys(ISSUE_LABELS).forEach(function (k) {
+      var n = (issues[k] || []).length;
+      html += '<button class="ichip' + ($("f-issue").value === k ? " active" : "") + (n ? "" : " zero") + '" data-issue="' + k + '">' +
+        ISSUE_LABELS[k] + " " + n + "</button>";
+    });
+    $("audit").innerHTML = html;
+  }
+  function renderStatus() {
+    var s = { edited: Object.keys(ov.edits).length, deleted: ov.deleted.length, added: ov.added.length };
+    $("ovstat").textContent = "已修正 " + s.edited + " · 删除 " + s.deleted + " · 新增 " + s.added + " 条";
+    var d = diff(saved, ov);
+    $("dirty").textContent = d.length;
+    $("btn-undo").disabled = !undoStack.length;
+  }
+  function renderBulk() {
+    $("bulk").hidden = selected.size === 0;
+    $("sel-count").textContent = selected.size;
+  }
+  function refresh() { items = buildItems(); issues = audit(items); renderAudit(); renderTable(); renderStatus(); }
+
+  /* ------------------------------ 差异 ------------------------------ */
+  function diff(a, b) {
+    var lines = [];
+    var keys = {};
+    Object.keys(a.edits || {}).concat(Object.keys(b.edits || {})).forEach(function (k) { keys[k] = 1; });
+    Object.keys(keys).forEach(function (k) {
+      if (!eq(a.edits[k], b.edits[k])) {
+        var it = items.find(function (x) { return x._key === k; });
+        lines.push("修改 " + (it ? "《" + it.n + "》" : k.slice(0, 12)) + "：" + Object.keys(b.edits[k] || {}).join("、"));
+      }
+    });
+    var ad = a.deleted || [], bd = b.deleted || [];
+    bd.filter(function (k) { return ad.indexOf(k) < 0; }).forEach(function (k) { lines.push("删除 " + k.slice(0, 12)); });
+    ad.filter(function (k) { return bd.indexOf(k) < 0; }).forEach(function (k) { lines.push("恢复 " + k.slice(0, 12)); });
+    if ((a.added || []).length !== (b.added || []).length || !eq(a.added, b.added)) {
+      lines.push("新增条目：" + (a.added || []).length + " → " + (b.added || []).length);
+      (b.added || []).slice((a.added || []).length).forEach(function (x) { lines.push("  ＋ " + (x.n || "未命名")); });
+    }
+    return lines;
+  }
+
+  /* ------------------------------ 编辑动作 ------------------------------ */
+  function byKey(key) { return items.find(function (x) { return x._key === key; }); }
+  /** 原值：字段缺省时给出中性默认，避免「什么都没改」也被记成一条修正 */
+  function baseVal(it, f) {
+    var v = it._orig ? it._orig[f] : undefined;
+    if (v !== undefined) return v;
+    if (f === "pan") return [];
+    if (f === "panCode") return false;
+    if (f === "ai" || f === "confidence") return null;
+    return "";
+  }
+  function setFields(key, changes) {
+    var it = byKey(key); if (!it) return;
+    pushUndo();
+    if (it._added) {
+      Object.keys(changes).forEach(function (f) { ov.added[it._idx][f] = changes[f]; });
+    } else {
+      var e = ov.edits[key] || (ov.edits[key] = {});
+      Object.keys(changes).forEach(function (f) {
+        if (eq(changes[f], baseVal(it, f))) delete e[f];
+        else e[f] = changes[f];
+      });
+      if (!Object.keys(e).length) delete ov.edits[key];
+    }
+    refresh();
+  }
+  function removeKeys(keys) {
+    if (!keys.length) return;
+    pushUndo();
+    var addedIdx = [], normal = [];
+    keys.forEach(function (k) {
+      var it = byKey(k); if (!it) return;
+      if (it._added) addedIdx.push(it._idx); else normal.push(k);
+      selected.delete(k);
+    });
+    addedIdx.sort(function (a, b) { return b - a; }).forEach(function (i) { ov.added.splice(i, 1); });
+    normal.forEach(function (k) {
+      delete ov.edits[k];
+      if (ov.deleted.indexOf(k) < 0) ov.deleted.push(k);
+    });
+    refresh();
+  }
+  function addEntry(layer) {
+    pushUndo();
+    ov.added.push({ layer: layer === "a" ? "a" : "b", n: "", p: "", d: "", t: "pub", g: "", ai: null, v: "", k: "release", src: SOURCES[0].id, u: "", dl: "", note: "", pan: [], panCode: false });
+    refresh();
+    var last = items[items.length - 1];
+    if (last) openDrawer(last._key);
+  }
+
+  /* ------------------------------ 抽屉表单 ------------------------------ */
+  function fieldRow(it, f, label, inputHtml, origVal) {
+    var changed = it._orig && !eq(it[f] === undefined ? "" : it[f], origVal === undefined ? "" : origVal);
+    return '<div class="frow"><label>' + label + "</label><div>" + inputHtml +
+      (changed ? '<div class="orig">原值：' + esc(origVal === "" || origVal == null ? "（空）" : origVal) + "</div>" : "") +
+      "</div></div>";
+  }
+  function openDrawer(key) {
+    var it = byKey(key); if (!it) return;
+    var orig = it._orig || {};
+    function txt(f, label, type) {
+      return fieldRow(it, f, label, '<input id="fd-' + f + '" type="' + (type || "text") + '" value="' + esc(it[f] == null ? "" : it[f]) + '">', orig[f]);
+    }
+    function sel(f, label, options, cur) {
+      var opts = options.map(function (o) {
+        return '<option value="' + esc(o[0]) + '"' + (String(cur == null ? "" : cur) === String(o[0]) ? " selected" : "") + ">" + esc(o[1]) + "</option>";
+      }).join("");
+      return fieldRow(it, f, label, '<select id="fd-' + f + '">' + opts + "</select>", orig[f]);
+    }
+    var srcOpts = SOURCES.map(function (s) { return [s.id, s.name]; });
+    var platOpts = KNOWN_PLAT.map(function (p) { return [p, p]; });
+    if (KNOWN_PLAT.indexOf(String(it.p || "").toUpperCase()) < 0 && it.p) platOpts.unshift([it.p, it.p + "（当前）"]);
+    var html = '<h2>' + esc(it.n || "新条目") + '</h2><div class="sub">' + esc(it._key) + " · " +
+      (it._layer === "a" ? "自动抓取" : it._layer === "x" ? "修正台新增" : "人工快照") + "</div>" +
+      txt("n", "游戏名") + sel("p", "平台", platOpts, it.p) +
+      txt("d", "日期", "date") +
+      sel("t", "日期性质", [["", "未标注"], ["pub", "确切发布日"], ["list", "汇总/检索日"], ["ver", "版本日期码"]], it.t) +
+      txt("g", "汉化者") +
+      sel("ai", "AI 参与", [["", "未标注"], ["true", "AI 辅助"], ["false", "明确人工"]], it.ai === true ? "true" : it.ai === false ? "false" : "") +
+      txt("v", "版本") +
+      sel("k", "数据范围", [["release", "近期发布动态"], ["catalog", "存量清单"]], it.k) +
+      sel("src", "来源", srcOpts, it.src) +
+      txt("u", "发布页 URL") + txt("dl", "补丁 URL") +
+      fieldRow(it, "note", "备注", '<textarea id="fd-note">' + esc(it.note || "") + "</textarea>", orig.note) +
+      '<div class="frow"><label>网盘渠道</label><div class="chk">' +
+        PAN_WHITELIST.map(function (p, i) {
+          return '<label><input id="fd-pan-' + i + '" type="checkbox" value="' + esc(p) + '"' +
+            ((it.pan || []).indexOf(p) >= 0 ? " checked" : "") + ">" + esc(p) + "</label>";
+        }).join("") +
+        '<label><input id="fd-panCode" type="checkbox"' + (it.panCode ? " checked" : "") + ">需提取码</label></div></div>" +
+      txt("confidence", "置信度", "number") +
+      '<div class="warn">只修正索引元数据。发布页 / 补丁链接不能是网盘、镜像或磁力链，备注里的链接与提取码会被自动清洗。</div>' +
+      '<div class="drawer-actions"><button class="btn primary" id="fd-save" type="button">应用修改</button>' +
+      '<button class="btn danger" id="fd-del" type="button">删除此条</button>' +
+      '<button class="btn" id="fd-close" type="button">取消</button></div>';
+    $("drawer").innerHTML = html;
+    $("drawer").hidden = false; $("overlay").hidden = false;
+    $("fd-close").onclick = closeDrawer;
+    $("fd-save").onclick = function () {
+      var c = {};
+      ["n","p","d","t","g","v","k","src","u","dl","note"].forEach(function (f) { c[f] = $("fd-" + f).value.trim(); });
+      var ai = $("fd-ai").value;
+      c.ai = ai === "true" ? true : ai === "false" ? false : null;
+      c.pan = PAN_WHITELIST.filter(function (p, i) { return $("fd-pan-" + i).checked; });
+      c.panCode = $("fd-panCode").checked;
+      var cf = $("fd-confidence").value.trim();
+      c.confidence = cf === "" ? null : Number(cf);
+      if (!c.n || !c.p || !c.u) { toast("游戏名、平台、发布页 URL 为必填"); return; }
+      setFields(key, c);
+      closeDrawer(); toast("已修改，记得点「保存修正」写盘");
+    };
+    $("fd-del").onclick = function () { removeKeys([key]); closeDrawer(); toast("已标记删除，记得保存"); };
+  }
+  function closeDrawer() { $("drawer").hidden = true; $("overlay").hidden = true; }
+
+  /* ------------------------------ Modal ------------------------------ */
+  function openModal(title, body, actions, extraHandler) {
+    var a = (actions || []).map(function (x, i) {
+      return '<button class="btn ' + (x.cls || "") + '" data-act="' + i + '" type="button">' + esc(x.label) + "</button>";
+    }).join("");
+    $("modal").innerHTML = "<h3>" + esc(title) + "</h3>" + body + '<div class="actions">' + a +
+      '<button class="btn" data-act="cancel" type="button">关闭</button></div>';
+    $("modal").hidden = false; $("overlay").hidden = false;
+    $("modal").onclick = function (e) {
+      var r = e.target.closest("[data-rest]");
+      if (r && extraHandler) { extraHandler(r.getAttribute("data-rest")); return; }
+      var b = e.target.closest("[data-act]"); if (!b) return;
+      var v = b.getAttribute("data-act");
+      if (v === "cancel") return closeModal();
+      var fn = actions[Number(v)].fn;
+      if (fn) fn();
+    };
+  }
+  function closeModal() { $("modal").hidden = true; $("overlay").hidden = $("drawer").hidden; }
+
+  /* ------------------------------ 保存 / 导出 / 备份 ------------------------------ */
+  function exportPatch() {
+    var blob = new Blob([JSON.stringify(ov, null, 2)], { type: "application/json;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "hanhua-fixes-" + new Date().toISOString().slice(0, 10) + ".json";
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    toast("已导出补丁；离线可用 npm run apply-fixes -- <文件名> 应用");
+  }
+  function save() {
+    var lines = diff(saved, ov);
+    if (!lines.length) { toast("没有未保存的改动"); return; }
+    var body = '<div class="warn">保存会写入 data/overrides.json 与 overrides.js，自动备份当前修正，并重建单文件版。不会改动 data.js / auto-data.js。</div>' +
+      "<pre>" + esc(lines.join("\n")) + (lines.length > 40 ? "\n…（共 " + lines.length + " 项）" : "") + "</pre>";
+    if (!online) {
+      openModal("离线模式 · 请导出补丁", '<div class="warn">当前是直接打开的本地文件，浏览器无法写盘。请导出补丁后用命令行应用：</div><pre>npm run apply-fixes -- hanhua-fixes-日期.json</pre>' + body,
+        [{ label: "导出补丁", cls: "primary", fn: function () { closeModal(); exportPatch(); } }]);
+      return;
+    }
+    openModal("保存前确认（" + lines.length + " 项改动）", body, [{
+      label: "确认保存", cls: "primary", fn: function () {
+        closeModal();
+        fetch("/api/save", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(ov) })
+          .then(function (r) { return r.json(); }).then(function (out) {
+            if (!out.ok) { openModal("保存被拒绝", "<pre>" + esc((out.errors || []).join("\n")) + "</pre>", []); return; }
+            saved = clone(ov); renderStatus();
+            toast(out.noChange ? "内容一致，无需写入" : "已保存 · 备份 " + (out.backup || "—") + " · 单文件版已重建");
+            loadState();
+          }).catch(function (e) { toast("保存失败：" + e.message); });
+      }
+    }]);
+  }
+  function loadState() {
+    if (!online) return;
+    fetch("/api/state").then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.ok) return;
+      $("ovstat").textContent = "已修正 " + d.stats.edited + " · 删除 " + d.stats.deleted + " · 新增 " + d.stats.added + " 条";
+    }).catch(function () {});
+  }
+  function backups() {
+    if (!online) { toast("离线模式无法读取备份，请用命令行 npm run apply-fixes -- --list"); return; }
+    fetch("/api/backups").then(function (r) { return r.json(); }).then(function (d) {
+      var list = d.backups || [];
+      var body = list.length
+        ? '<div class="list">' + list.map(function (f) { return '<button class="btn" data-rest="' + esc(f) + '" type="button">回滚到 ' + esc(f) + "</button>"; }).join("") + "</div>"
+        : "<pre>暂无备份。第一次保存修正后会自动生成。</pre>";
+      openModal("备份 / 回滚", body, [], function (name) {
+        fetch("/api/restore", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: name }) })
+          .then(function (r) { return r.json(); }).then(function (out) {
+            if (!out.ok) { toast("回滚失败：" + (out.errors || []).join("；")); return; }
+            closeModal(); toast("已回滚到 " + name + "，页面即将刷新");
+            setTimeout(function () { location.reload(); }, 900);
+          });
+      });
+    });
+  }
+  function rebuild() {
+    if (!online) { toast("离线模式请用命令行 npm run build"); return; }
+    fetch("/api/rebuild", { method: "POST" }).then(function (r) { return r.json(); })
+      .then(function (d) { toast(d.ok ? "单文件版已重建" : "重建失败：" + (d.errors || []).join("；")); });
+  }
+
+  /* ------------------------------ 批量 / 正则 ------------------------------ */
+  function bulkApply() {
+    var keys = Array.from(selected), f = $("bulk-field").value, v = $("bulk-value").value.trim();
+    if (!keys.length) return;
+    if (f === "u" && !/^https?:\/\//i.test(v)) { toast("发布页 URL 必须是 http(s) 链接"); return; }
+    pushUndo();
+    keys.forEach(function (k) {
+      var it = byKey(k); if (!it) return;
+      if (it._added) ov.added[it._idx][f] = v;
+      else {
+        var e = ov.edits[k] || (ov.edits[k] = {});
+        if (eq(v, baseVal(it, f))) delete e[f]; else e[f] = v;
+        if (!Object.keys(e).length) delete ov.edits[k];
+      }
+    });
+    refresh(); toast("已批量修改 " + keys.length + " 条");
+  }
+  function regexDialog() {
+    var keys = Array.from(selected);
+    var scope = keys.length ? "选中的 " + keys.length + " 条" : "当前筛选结果";
+    var body = '<div class="frow"><label>目标字段</label><div><select id="rx-field"><option value="n">游戏名</option><option value="note">备注</option><option value="g">汉化者</option><option value="v">版本</option></select></div></div>' +
+      '<div class="frow"><label>查找</label><div><input id="rx-find" placeholder="纯文本，或 /正则/flags（如 /第\\d+版/g）"></div></div>' +
+      '<div class="frow"><label>替换为</label><div><input id="rx-repl" placeholder="留空表示删除匹配内容"></div></div>' +
+      '<div class="hint">作用范围：' + esc(scope) + '。先用「预览」确认，再应用。</div><pre id="rx-preview">输入查找内容后点预览</pre>';
+    openModal("批量正则替换", body, [
+      { label: "预览", fn: function () { rxPreview(false); } },
+      { label: "应用替换", cls: "primary", fn: function () { rxPreview(true); } }
+    ]);
+  }
+  function rxCompile(text) {
+    var s = String(text || "");
+    if (!s) return null;
+    var m = s.match(/^\/(.+)\/([gimsuy]*)$/);
+    try { return m ? new RegExp(m[1], m[2]) : new RegExp(s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"); }
+    catch (e) { return { error: e.message }; }
+  }
+  function rxPreview(apply) {
+    var f = $("rx-field").value, find = $("rx-find").value, repl = $("rx-repl").value;
+    var re = rxCompile(find);
+    if (!re || re.error) { $("rx-preview").textContent = "查找表达式无效：" + (re && re.error ? re.error : "请输入内容"); return; }
+    var keys = selected.size ? Array.from(selected) : filtered().map(function (x) { return x._key; });
+    var lines = [], changed = 0;
+    keys.forEach(function (k) {
+      var it = byKey(k); if (!it) return;
+      var before = String(it[f] == null ? "" : it[f]);
+      re.lastIndex = 0;
+      var after = before.replace(re, repl);
+      if (after === before) return;
+      changed++;
+      if (lines.length < 8) lines.push("《" + it.n + "》\n  - " + before.slice(0, 90) + "\n  + " + after.slice(0, 90));
+    });
+    $("rx-preview").textContent = "预计修改 " + changed + " 条\n\n" + (lines.join("\n\n") || "（无匹配）");
+    if (apply && changed) {
+      pushUndo();
+      keys.forEach(function (k) {
+        var it = byKey(k); if (!it) return;
+        var before = String(it[f] == null ? "" : it[f]);
+        re.lastIndex = 0;
+        var after = before.replace(re, repl);
+        if (after === before) return;
+        if (it._added) ov.added[it._idx][f] = after;
+        else {
+          var e = ov.edits[k] || (ov.edits[k] = {});
+          if (eq(after, baseVal(it, f))) delete e[f]; else e[f] = after;
+          if (!Object.keys(e).length) delete ov.edits[k];
+        }
+      });
+      closeModal(); refresh(); toast("正则替换完成，修改 " + changed + " 条");
+    }
+  }
+
+  /* ------------------------------ 事件 ------------------------------ */
+  function initSelects() {
+    $("f-source").innerHTML = '<option value="">全部来源</option>' + SOURCES.map(function (s) {
+      return '<option value="' + esc(s.id) + '">' + esc(s.name) + "</option>";
+    }).join("");
+    var plats = {};
+    (BASE.items || []).concat(AUTO.items || []).forEach(function (x) { plats[String(x.p || "").toUpperCase()] = 1; });
+    delete plats.UNDEFINED;
+    $("f-platform").innerHTML = '<option value="">全部平台</option>' + Object.keys(plats).sort().map(function (p) {
+      return '<option value="' + esc(p) + '">' + esc(p) + "</option>";
+    }).join("");
+    $("f-issue").innerHTML = '<option value="">全部问题类型</option>' + Object.keys(ISSUE_LABELS).map(function (k) {
+      return '<option value="' + k + '">' + ISSUE_LABELS[k] + "</option>";
+    }).join("");
+  }
+  function bind() {
+    ["q","f-layer","f-source","f-platform","f-issue","f-pan","f-edited","page-size"].forEach(function (id) {
+      $(id).addEventListener(id === "q" ? "input" : "change", function () { page = 0; renderTable(); renderAudit(); });
+    });
+    $("audit").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-issue]"); if (!b) return;
+      $("f-issue").value = b.getAttribute("data-issue"); page = 0; renderTable(); renderAudit();
+    });
+    $("tbody").addEventListener("click", function (e) {
+      var c = e.target.closest(".rowchk");
+      if (c) { c.checked ? selected.add(c.getAttribute("data-key")) : selected.delete(c.getAttribute("data-key")); renderBulk(); c.closest("tr").classList.toggle("sel", c.checked); return; }
+      var b = e.target.closest(".editbtn"); if (b) openDrawer(b.getAttribute("data-key"));
+    });
+    $("chk-all").addEventListener("change", function (e) {
+      var list = filtered(), size = Number($("page-size").value), rows = list.slice(page * size, (page + 1) * size);
+      rows.forEach(function (it) { e.target.checked ? selected.add(it._key) : selected.delete(it._key); });
+      renderTable();
+    });
+    $("pg-prev").onclick = function () { page--; renderTable(); };
+    $("pg-next").onclick = function () { page++; renderTable(); };
+    $("btn-add").onclick = function () { addEntry("b"); };
+    $("bulk-apply").onclick = bulkApply;
+    $("bulk-regex").onclick = regexDialog;
+    $("bulk-clear").onclick = function () { selected.clear(); renderTable(); };
+    $("bulk-delete").onclick = function () {
+      var keys = Array.from(selected);
+      openModal("确认删除", "<pre>将标记删除 " + keys.length + " 条。保存后这些条目会从索引中消失，但原始快照文件不变，随时可以回滚。</pre>",
+        [{ label: "确认删除", cls: "danger", fn: function () { closeModal(); removeKeys(keys); toast("已标记删除 " + keys.length + " 条"); } }]);
+    };
+    $("btn-save").onclick = save;
+    $("btn-export").onclick = exportPatch;
+    $("btn-backups").onclick = backups;
+    $("btn-rebuild").onclick = rebuild;
+    $("btn-refresh").onclick = function () { location.reload(); };
+    $("btn-undo").onclick = function () {
+      if (!undoStack.length) return;
+      ov = undoStack.pop(); selected.clear(); refresh(); toast("已撤销上一步");
+    };
+    $("overlay").onclick = function () { if (!$("modal").hidden) closeModal(); else closeDrawer(); };
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { closeDrawer(); closeModal(); }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !/input|textarea|select/i.test(document.activeElement.tagName)) {
+        e.preventDefault(); $("btn-undo").click();
+      }
+    });
+  }
+
+  /* ------------------------------ 启动 ------------------------------ */
+  initSelects(); bind(); refresh();
+  fetch("/api/ping").then(function (r) { return r.json(); }).then(function (d) {
+    online = !!(d && d.ok);
+    $("mode").textContent = online ? "本地服务 · 可直接写盘" : "离线 · 仅导出补丁";
+    $("mode").className = "pill " + (online ? "online" : "offline");
+    if (online) loadState();
+  }).catch(function () {
+    online = false;
+    $("mode").textContent = "离线 · 仅导出补丁";
+    $("mode").className = "pill offline";
+  });
+})();
+</script>
+</body>
+</html>

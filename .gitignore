@@ -14,6 +14,10 @@ _shot*.html
 hanhua-export*.json
 custom-export*.json
 
+# 数据修正台：自动备份与导出补丁（本机数据，不入库）
+data/backups/
+hanhua-fixes*.json
+
 # 编辑器 / 系统
 .DS_Store
 Thumbs.db

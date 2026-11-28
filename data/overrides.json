@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-26T14:18:31.791Z",
+  "note": "由数据修正台生成。只记录相对原始快照的差量，不修改 data.js 与 data/auto.json；定时抓取不会覆盖此文件。",
+  "edits": {},
+  "deleted": [],
+  "added": []
+}

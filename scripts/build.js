@@ -14,8 +14,10 @@ function inlineScript(code) { return "<script>\n" + String(code).replace(/<\/scr
 let html = read("index.html");
 const replacements = [
   ['<link rel="stylesheet" href="styles.css">', "<style>\n" + read("styles.css") + "\n</style>"],
+  ['<script src="fingerprint.js"></script>', inlineScript(read("fingerprint.js"))],
   ['<script src="data.js"></script>', inlineScript(read("data.js"))],
   ['<script src="auto-data.js"></script>', inlineScript(read("auto-data.js"))],
+  ['<script src="overrides.js"></script>', inlineScript(read("overrides.js"))],
   ['<script src="app.js"></script>', inlineScript(read("app.js"))]
 ];
 replacements.forEach(function (pair) {
