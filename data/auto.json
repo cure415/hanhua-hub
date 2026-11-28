@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-28T14:03:31.010Z",
+  "generatedAt": "2026-11-28T14:06:55.094Z",
   "asOf": "2026-11-28",
   "minConfidence": 0.55,
   "note": "由 scripts/fetch.js 自动抓取生成。仅索引发布者原始页面，不含 ROM / ISO / 网盘直链。pan 只记录发布页标注的网盘渠道名，panCode 只标记是否需要提取码，均不含链接、提取码取值或文件名。日期性质：pub=明确发布日，list=汇总/检索日，ver=版本日期码。",
@@ -77,16 +77,16 @@
       "status": "ok",
       "count": 0,
       "message": "发现 3 篇汇总，本次解析 0 篇",
-      "ms": 581
+      "ms": 1874
     },
     {
       "id": "youxi360-auto",
       "name": "全游网 · 模拟资讯「汉化情报」栏目（自动抓取）",
       "kind": "youxi360",
-      "status": "ok",
-      "count": 10,
-      "message": "汉化情报栏目 2 页 / 20 条，收录近期 20 条",
-      "ms": 1346
+      "status": "error",
+      "count": 0,
+      "message": "HTTP 418",
+      "ms": 2510
     },
     {
       "id": "a9vg-index-auto",
@@ -95,7 +95,7 @@
       "status": "ok",
       "count": 0,
       "message": "版块命中 4 个主题，新解析 0 个",
-      "ms": 495
+      "ms": 16049
     },
     {
       "id": "stage1st-index-auto",
@@ -104,7 +104,7 @@
       "status": "ok",
       "count": 0,
       "message": "版块命中 0 个主题，新解析 0 个",
-      "ms": 7436
+      "ms": 15831
     },
     {
       "id": "gmerago-sfc-auto",
@@ -113,7 +113,7 @@
       "status": "ok",
       "count": 0,
       "message": "长帖解析出 35 行候选（去重后才会入库）",
-      "ms": 3333
+      "ms": 1498
     },
     {
       "id": "gmerago-ps2-auto",
@@ -122,7 +122,7 @@
       "status": "ok",
       "count": 0,
       "message": "长帖解析出 63 行候选（去重后才会入库）",
-      "ms": 1049
+      "ms": 550
     },
     {
       "id": "cheatmaker-auto",
@@ -131,7 +131,7 @@
       "status": "ok",
       "count": 0,
       "message": "长帖解析出 27 行候选（去重后才会入库）",
-      "ms": 2243
+      "ms": 1147
     },
     {
       "id": "quanjizhong-auto",
@@ -140,16 +140,16 @@
       "status": "ok",
       "count": 0,
       "message": "机种日志解析出 573 行候选",
-      "ms": 798
+      "ms": 1811
     }
   ],
   "stats": {
     "totalAutoItems": 735,
-    "newThisRun": 10,
+    "newThisRun": 0,
     "pendingReview": 0,
-    "sourcesOk": 8,
-    "sourcesError": 0,
-    "elapsedMs": 17281,
+    "sourcesOk": 7,
+    "sourcesError": 1,
+    "elapsedMs": 41270,
     "panChannelItems": 49,
     "panBaidu": 8,
     "panQuark": 13,
